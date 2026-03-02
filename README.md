@@ -125,14 +125,14 @@ The system uses a Role-Based Access Control (RBAC) model:
 
 ### Staff
 
-* Create and manage orders
+* Manage orders
 * Manage tables
 * Access operational features
 
 ### Customer
 
 * View QR Menu
-* Browse available products
+* Browse available products and create order
 
 ---
 
