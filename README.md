@@ -1,8 +1,8 @@
-# 🍽 Smart Restaurant Management System
+# 🍽 Restaurant Management System
 
 ## 1. Executive Summary
 
-The Smart Restaurant Management System is a web-based conceptual software project developed for the Software Project Management course. The project aims to design a scalable, secure, and user-friendly restaurant management platform that digitalizes core restaurant operations such as authentication, menu management, order processing, reporting, and financial analysis.
+The Restaurant Management System is a web-based conceptual software project developed for the Software Project Management course. The project aims to design a scalable, secure, and user-friendly restaurant management platform that digitalizes core restaurant operations such as authentication, menu management, order processing, reporting, and financial analysis.
 
 The project is managed using Agile Scrum methodology with Jira-based sprint planning, UML modeling, and structured academic documentation. Although the system is currently in the planning phase, it follows industry-standard software engineering, project lifecycle, and Agile management practices.
 
@@ -16,7 +16,7 @@ Traditional restaurant operations often rely on manual systems, spreadsheets, or
 
 ### 2.2 Product Vision
 
-The vision of the Smart Restaurant Management System is to provide a centralized web application that automates restaurant workflows, improves operational efficiency, and enhances decision-making through real-time data and analytics.
+The vision of the Restaurant Management System is to provide a centralized web application that automates restaurant workflows, improves operational efficiency, and enhances decision-making through real-time data and analytics.
 
 ### 2.3 Target Users
 
@@ -145,8 +145,8 @@ The system uses a Role-Based Access Control (RBAC) model:
 
 A hierarchical access structure is planned:
 
-* Level 1 (Customer): QR Menu View
-* Level 2 (Staff): Orders & Table Management
+* Level 1 (Customer): QR Menu View, Create Order
+* Level 2 (Staff): View and manage active orders, Manage tables, Access operational features
 * Level 3 (Admin): Full System Control (Menu, Reports, Financial Analysis)
 
 This layered model ensures operational security and controlled data access.
@@ -202,14 +202,14 @@ The system is designed with scalability and future integration in mind:
 
 ## 12. Competitive Analysis and Differentiation
 
-| Feature                   | Smart RMS | Traditional Restaurant Systems |
-| ------------------------- | --------- | ------------------------------ |
-| Web-Based Access          | ✅         | ❌                              |
-| Role-Based Access Control | ✅         | Limited                        |
-| Agile Project Planning    | ✅         | ❌                              |
-| Integrated Reporting      | ✅         | Partial                        |
-| QR Menu Integration       | ✅         | ❌                              |
-| Academic Documentation    | ✅         | ❌                              |
+| Feature                   | Restaurant Management System | Traditional Restaurant Systems |
+|---------------------------|------------------------------|--------------------------------|
+| Web-Based Access          | Yes                          | No                             |
+| Role-Based Access Control | Yes                          | Limited                        |
+| Agile Project Planning    | Yes                          | No                             |
+| Integrated Reporting      | Yes                          | Partial                        |
+| QR Menu Integration       | Yes                          | No                             |
+| Academic Documentation    | Yes                          | No                             |
 
 The project differentiates itself by combining modern web technologies with structured Agile project management practices.
 
@@ -278,7 +278,7 @@ The UML diagram ensures clear visualization of system scope, user roles, and fun
 
 ### System Use Case Diagram
 
-![UML Use Case Diagram](docs/UML_UseCase_RestaurantManagamentSystem.png)
+![UML Use Case Diagram](docs/UML_UseCase_RestaurantManagementSystem.png)
 
 ---
 
@@ -287,7 +287,10 @@ The UML diagram ensures clear visualization of system scope, user roles, and fun
 * Course: Software Project Management
 * Project Type: Academic Group Project
 * Methodology: Agile Scrum with Jira Tracking
-* Team Members: Batuhan İNAN (Backend), Emir İnanç ŞEKER (Frontend), İzzet Ali ARSLAN (Database)
+* Team Members:
+  - Batuhan İNAN – Backend Developer (Node.js)
+  - Emir İnanç ŞEKER – Frontend Developer (React)
+  - İzzet Ali ARSLAN – Database & Analytics Developer (MySQL & Reports)
 * Application Type: Web-Based System
 * Development Stack: React + Node.js + MySQL
 * Project Status: Planned & Documented (Conceptual Implementation)
@@ -296,7 +299,7 @@ The UML diagram ensures clear visualization of system scope, user roles, and fun
 
 All project-related academic documents are organized in the `docs/` folder for structured access:
 
-- 📊 Project Planning Document: `docs/Smart_Restaurant_Project_Planning.xlsx`
+- 📊 Project Planning Document: `docs/Restaurant_Project_Planning.xlsx`
 - 🧩 UML Use Case Diagram: `docs/UML_UseCase_RestaurantManagamentSystem.png`
 
 These documents include the 14-week project timeline, sprint planning, team roles, budget planning, and system modeling prepared in accordance with the Software Project Management course requirements.
