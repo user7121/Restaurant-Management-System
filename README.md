@@ -276,6 +276,10 @@ A Use Case Diagram has been designed to model system interactions between actors
 
 The UML diagram ensures clear visualization of system scope, user roles, and functional boundaries in accordance with software engineering documentation standards.
 
+### System Use Case Diagram
+
+![UML Use Case Diagram](docs/UML_UseCase_SmartRestaurant.png)
+
 ---
 
 ## 👥 Team & Project Context
