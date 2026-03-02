@@ -278,7 +278,7 @@ The UML diagram ensures clear visualization of system scope, user roles, and fun
 
 ### System Use Case Diagram
 
-![UML Use Case Diagram](docs/UML_UseCase_SmartRestaurant.png)
+![UML Use Case Diagram](docs/UML_UseCase_RestaurantManagamentSystem.png)
 
 ---
 
