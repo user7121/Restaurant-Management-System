@@ -297,6 +297,6 @@ The UML diagram ensures clear visualization of system scope, user roles, and fun
 All project-related academic documents are organized in the `docs/` folder for structured access:
 
 - 📊 Project Planning Document: `docs/Smart_Restaurant_Project_Planning.xlsx`
-- 🧩 UML Use Case Diagram: `docs/UML_UseCase_SmartRestaurant.png`
+- 🧩 UML Use Case Diagram: `docs/UML_UseCase_RestaurantManagamentSystem.png`
 
 These documents include the 14-week project timeline, sprint planning, team roles, budget planning, and system modeling prepared in accordance with the Software Project Management course requirements.
