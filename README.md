@@ -79,15 +79,10 @@ The project follows a three-tier web architecture:
 ### 5.1 Frontend
 
 * React.js
-* JavaScript (ES6+)
-* HTML5 & CSS3
 
 ### 5.2 Backend
 
 * Node.js
-* Express.js
-* JWT (JSON Web Token Authentication)
-* bcrypt (Password Hashing)
 
 ### 5.3 Database
 
