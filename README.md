@@ -255,47 +255,6 @@ The system design can be extended into a commercial SaaS restaurant management p
 
 ---
 
-## 📅 Agile Sprint Planning (Jira-Based)
-
-The project follows a 14-week Agile Scrum plan aligned with course requirements:
-
-### Sprint 1: Authentication & Core Setup (1 Mar – 12 Mar)
-
-* User Registration System
-* Login & Logout System
-* Role-Based Authorization
-
-### Sprint 2: Menu & Product Management (13 Mar – 26 Mar)
-
-* Category Management
-* Product Management (CRUD)
-* Stock Management System
-
-### Sprint 3: Order & Table Management (27 Mar – 9 Apr)
-
-* Table Management
-* Order Creation System
-* Order Status Tracking
-
-### Sprint 4: Reporting Features (10 Apr – 23 Apr)
-
-* Daily Sales Report
-* Best-Selling Product Analysis
-
-### Sprint 5: Financial Analysis (24 Apr – 7 May)
-
-* Revenue & Profit Calculation
-
-### Sprint 6: Final Documentation & Project Delivery (8 May – 21 May)
-
-* Excel Planning File Creation
-* UML Diagram Design
-* GitHub Repository Finalization
-* Project Documentation Preparation
-* Jira Monitoring & Instructor Review
-
----
-
 ## 🧩 UML & System Modeling
 
 A Use Case Diagram has been designed to model system interactions between actors and core functionalities.
