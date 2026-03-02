@@ -29,9 +29,9 @@ The project is managed using:
 
 ## 👥 Team Roles
 
-* Backend Developer – API, authentication, system logic
-* Frontend Developer – UI, dashboard, and user interface
-* Database & Analytics Developer – Database schema, ER diagram, SQL queries, and reports
+* Backend Developer – Batuhan İNAN - API, authentication, system logic
+* Frontend Developer – Emir İnanç ŞEKER - UI, dashboard, and user interface
+* Database & Analytics Developer – İzzet Ali ARSLAN - Database schema, ER diagram, SQL queries, and reports
 
 ## 📅 Project Planning Deliverables
 
