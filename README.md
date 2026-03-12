@@ -4,8 +4,7 @@
 
 The Restaurant Management System is a web-based conceptual software project developed for the Software Project Management course. The project aims to design a scalable, secure, and user-friendly restaurant management platform that digitalizes core restaurant operations such as authentication, menu management, order processing, reporting, and financial analysis.
 
-The project is managed using Agile Scrum methodology with Jira-based sprint planning, UML modeling, and structured academic documentation. Although the system is currently in the planning phase, it follows industry-standard software engineering, project lifecycle, and Agile management practices.
-
+The project is managed using Agile Scrum methodology with Jira-based sprint planning, UML modeling, and structured academic documentation. The system is currently under active development and follows industry-standard software engineering practices, Agile project lifecycle management, and structured academic documentation.
 ---
 
 ## 2. Product Description and Vision
@@ -29,7 +28,7 @@ The vision of the Restaurant Management System is to provide a centralized web a
 
 ## 3. Core Features and Capabilities
 
-The system includes the following fully planned features:
+The system includes the following core features that are currently being implemented and tested:
 
 * Secure User Authentication & Authorization (JWT-based)
 * Role-Based Access Control (Admin & Staff)
@@ -179,13 +178,13 @@ The system interface is designed using modern UI/UX principles:
 5. Run backend server (Node.js)
 6. Run frontend application (React)
 
-Note: The system is currently in the conceptual and planning phase and not yet deployed to production.
+Note: The system is currently in the development stage and is being actively implemented. Production deployment has not yet been completed.
 
 ---
 
 ## 11. Integration and Scalability
 
-The system is designed with scalability and future integration in mind:
+The system is being developed with scalability and future integration in mind:
 
 * RESTful API for third-party integrations
 * Modular backend architecture
@@ -288,7 +287,7 @@ The UML diagram ensures clear visualization of system scope, user roles, and fun
   - İzzet Ali ARSLAN – Database & Analytics Developer (MySQL & Reports)
 * Application Type: Web-Based System
 * Development Stack: React + Node.js + MySQL
-* Project Status: Planned & Documented (Conceptual Implementation)
+* Project Status: Under Development (Implementation Phase)
 
 ## 📁 Project Documentation
 
