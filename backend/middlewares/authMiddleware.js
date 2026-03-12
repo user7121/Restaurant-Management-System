@@ -1,12 +1,12 @@
 // middlewares/authMiddleware.js
-// BLOK 4: Token doğrulama ve rol tabanlı yetkilendirme middleware'leri
+// BLOCK 4: Token verification and role-based authorization middleware
 
 const jwt = require('jsonwebtoken');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // verifyToken
-// Authorization: Bearer <token> header'ını doğrular.
-// Geçerliyse payload'ı req.user'a yazar ve bir sonraki middleware'e geçer.
+// Validates the Authorization: Bearer <token> header.
+// If valid, writes the decoded payload to req.user and calls next().
 // ─────────────────────────────────────────────────────────────────────────────
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -14,7 +14,7 @@ const verifyToken = (req, res, next) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
       success: false,
-      message: 'Erişim reddedildi. Yetkilendirme token\'ı bulunamadı.',
+      message: 'Access denied. No authorization token provided.',
     });
   }
 
@@ -28,28 +28,28 @@ const verifyToken = (req, res, next) => {
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
-        message: 'Token süresi dolmuş. Lütfen tekrar giriş yapın.',
+        message: 'Token has expired. Please log in again.',
       });
     }
     return res.status(401).json({
       success: false,
-      message: 'Geçersiz token.',
+      message: 'Invalid token.',
     });
   }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // checkRole
-// İzin verilen rollerin bir dizisini parametre olarak alır.
-// Örnek kullanım: checkRole(['Admin']) veya checkRole(['Admin', 'Manager'])
-// verifyToken middleware'inden sonra kullanılmalıdır.
+// Accepts an array of allowed roles as a parameter.
+// Example usage: checkRole(['Admin']) or checkRole(['Admin', 'Manager'])
+// Must be used after the verifyToken middleware.
 // ─────────────────────────────────────────────────────────────────────────────
 const checkRole = (allowedRoles) => {
   return (req, res, next) => {
     if (!req.user || !req.user.role_name) {
       return res.status(403).json({
         success: false,
-        message: 'Yetersiz yetki. Rol bilgisi bulunamadı.',
+        message: 'Insufficient permissions. Role information not found.',
       });
     }
 
@@ -58,7 +58,7 @@ const checkRole = (allowedRoles) => {
     if (!hasPermission) {
       return res.status(403).json({
         success: false,
-        message: `Erişim reddedildi. Bu işlem için gereken rol(ler): ${allowedRoles.join(', ')}. Mevcut rolünüz: ${req.user.role_name}.`,
+        message: `Access denied. Required role(s): ${allowedRoles.join(', ')}. Your current role: ${req.user.role_name}.`,
       });
     }
 

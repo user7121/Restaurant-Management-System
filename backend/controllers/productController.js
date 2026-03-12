@@ -1,9 +1,9 @@
 // controllers/productController.js
-// Ürün CRUD işlemleri - Sadece Admin yetkisi
+// Product CRUD operations - Admin only
 
 const pool = require('../config/db');
 
-// GET /api/products - Tüm ürünleri listele (herkese açık, token gerekli)
+// GET /api/products - List all products (authenticated users)
 const getAllProducts = async (req, res) => {
   try {
     const sql = `
@@ -21,12 +21,12 @@ const getAllProducts = async (req, res) => {
     const [rows] = await pool.execute(sql);
     return res.status(200).json({ success: true, data: rows });
   } catch (error) {
-    console.error('getAllProducts hatası:', error.message);
-    return res.status(500).json({ success: false, message: 'Ürünler alınamadı.' });
+    console.error('getAllProducts error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve products.' });
   }
 };
 
-// GET /api/products/:id - Tek ürün getir
+// GET /api/products/:id - Get a single product
 const getProductById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -39,26 +39,26 @@ const getProductById = async (req, res) => {
       [id]
     );
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Ürün bulunamadı.' });
+      return res.status(404).json({ success: false, message: 'Product not found.' });
     }
     return res.status(200).json({ success: true, data: rows[0] });
   } catch (error) {
-    console.error('getProductById hatası:', error.message);
-    return res.status(500).json({ success: false, message: 'Ürün alınamadı.' });
+    console.error('getProductById error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve product.' });
   }
 };
 
-// POST /api/products - Yeni ürün ekle (Admin)
+// POST /api/products - Create a new product (Admin)
 const createProduct = async (req, res) => {
   const { category_id, name, price, stock_quantity } = req.body;
   if (!category_id || !name || price === undefined) {
     return res.status(400).json({
       success: false,
-      message: 'category_id, name ve price alanları zorunludur.',
+      message: 'category_id, name and price are required.',
     });
   }
   if (parseFloat(price) < 0) {
-    return res.status(400).json({ success: false, message: 'Fiyat negatif olamaz.' });
+    return res.status(400).json({ success: false, message: 'Price cannot be negative.' });
   }
   try {
     const [result] = await pool.execute(
@@ -67,7 +67,7 @@ const createProduct = async (req, res) => {
     );
     return res.status(201).json({
       success: true,
-      message: 'Ürün başarıyla oluşturuldu.',
+      message: 'Product created successfully.',
       data: {
         product_id: result.insertId,
         category_id,
@@ -77,35 +77,35 @@ const createProduct = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('createProduct hatası:', error.message);
+    console.error('createProduct error:', error.message);
     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-      return res.status(400).json({ success: false, message: 'Geçersiz category_id.' });
+      return res.status(400).json({ success: false, message: 'Invalid category_id.' });
     }
-    return res.status(500).json({ success: false, message: 'Ürün oluşturulamadı.' });
+    return res.status(500).json({ success: false, message: 'Failed to create product.' });
   }
 };
 
-// PUT /api/products/:id - Ürün güncelle (Admin)
+// PUT /api/products/:id - Update a product (Admin)
 const updateProduct = async (req, res) => {
   const { id } = req.params;
   const { category_id, name, price, stock_quantity } = req.body;
 
-  // En az bir alan güncellenmeliyse
+  // At least one field must be provided
   if (!category_id && !name && price === undefined && stock_quantity === undefined) {
     return res.status(400).json({
       success: false,
-      message: 'Güncellenecek en az bir alan gönderilmelidir.',
+      message: 'At least one field must be provided for update.',
     });
   }
 
   try {
-    // Önce mevcut veriyi al
+    // Fetch current data first
     const [existing] = await pool.execute(
       'SELECT * FROM products WHERE product_id = ?',
       [id]
     );
     if (existing.length === 0) {
-      return res.status(404).json({ success: false, message: 'Ürün bulunamadı.' });
+      return res.status(404).json({ success: false, message: 'Product not found.' });
     }
 
     const current = existing[0];
@@ -123,7 +123,7 @@ const updateProduct = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Ürün güncellendi.',
+      message: 'Product updated.',
       data: {
         product_id: Number(id),
         category_id: updatedCategoryId,
@@ -133,15 +133,15 @@ const updateProduct = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('updateProduct hatası:', error.message);
+    console.error('updateProduct error:', error.message);
     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-      return res.status(400).json({ success: false, message: 'Geçersiz category_id.' });
+      return res.status(400).json({ success: false, message: 'Invalid category_id.' });
     }
-    return res.status(500).json({ success: false, message: 'Ürün güncellenemedi.' });
+    return res.status(500).json({ success: false, message: 'Failed to update product.' });
   }
 };
 
-// DELETE /api/products/:id - Ürün sil (Admin)
+// DELETE /api/products/:id - Delete a product (Admin)
 const deleteProduct = async (req, res) => {
   const { id } = req.params;
   try {
@@ -150,18 +150,18 @@ const deleteProduct = async (req, res) => {
       [id]
     );
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Ürün bulunamadı.' });
+      return res.status(404).json({ success: false, message: 'Product not found.' });
     }
-    return res.status(200).json({ success: true, message: 'Ürün silindi.' });
+    return res.status(200).json({ success: true, message: 'Product deleted.' });
   } catch (error) {
-    console.error('deleteProduct hatası:', error.message);
+    console.error('deleteProduct error:', error.message);
     if (error.code === 'ER_ROW_IS_REFERENCED_2') {
       return res.status(409).json({
         success: false,
-        message: 'Bu ürün mevcut siparişlerde yer alıyor. Silinemez.',
+        message: 'This product is referenced in existing orders and cannot be deleted.',
       });
     }
-    return res.status(500).json({ success: false, message: 'Ürün silinemedi.' });
+    return res.status(500).json({ success: false, message: 'Failed to delete product.' });
   }
 };
 

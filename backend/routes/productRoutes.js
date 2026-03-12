@@ -10,19 +10,19 @@ const {
   deleteProduct,
 } = require('../controllers/productController');
 
-// GET /api/products       - Herkes görebilir (token gerekli)
+// GET /api/products        - All authenticated users
 router.get('/', verifyToken, getAllProducts);
 
-// GET /api/products/:id   - Herkes görebilir (token gerekli)
+// GET /api/products/:id    - All authenticated users
 router.get('/:id', verifyToken, getProductById);
 
-// POST /api/products      - Sadece Admin
+// POST /api/products       - Admin only
 router.post('/', verifyToken, checkRole(['Admin']), createProduct);
 
-// PUT /api/products/:id   - Sadece Admin
+// PUT /api/products/:id    - Admin only
 router.put('/:id', verifyToken, checkRole(['Admin']), updateProduct);
 
-// DELETE /api/products/:id - Sadece Admin
+// DELETE /api/products/:id - Admin only
 router.delete('/:id', verifyToken, checkRole(['Admin']), deleteProduct);
 
 module.exports = router;

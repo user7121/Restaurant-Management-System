@@ -1,40 +1,40 @@
 // controllers/orderController.js
-// Sipariş işleme - Transaction + stok düşürme + rollback
+// Order processing - Transaction + stock deduction + rollback
 
 const pool = require('../config/db');
 
 const VALID_ORDER_STATUSES = ['Pending', 'Preparing', 'Ready', 'Delivered', 'Cancelled'];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/orders - Yeni sipariş oluştur
+// POST /api/orders - Create a new order
 // Body: { table_id, items: [{ product_id, quantity }] }
-// İşlem adımları (Transaction):
-//   1. Ürünleri stok ve fiyat için doğrula
-//   2. orders tablosuna ana kaydı ekle
-//   3. Her ürün için order_items tablosuna kayıt ekle
-//   4. Her ürünün stock_quantity değerini düşür
-//   5. Masayı "Occupied" yap
-//   Herhangi bir adımda hata → ROLLBACK
+// Transaction steps:
+//   1. Validate products (stock + price)
+//   2. Insert main record into orders table
+//   3. Insert a row into order_items for each product
+//   4. Deduct stock_quantity for each product
+//   5. Set table status to "Occupied"
+//   Any failure → ROLLBACK
 // ─────────────────────────────────────────────────────────────────────────────
 const createOrder = async (req, res) => {
   const { table_id, items } = req.body;
-  const user_id = req.user.user_id; // verifyToken middleware'inden gelir
+  const user_id = req.user.user_id; // comes from verifyToken middleware
 
-  // ── Temel doğrulama ───────────────────────────────────────────────────────
+  // ── Basic validation ──────────────────────────────────────────────────────
   if (!table_id) {
-    return res.status(400).json({ success: false, message: 'table_id zorunludur.' });
+    return res.status(400).json({ success: false, message: 'table_id is required.' });
   }
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({
       success: false,
-      message: 'items dizisi en az bir ürün içermelidir.',
+      message: 'items array must contain at least one product.',
     });
   }
   for (const item of items) {
     if (!item.product_id || !item.quantity || item.quantity < 1) {
       return res.status(400).json({
         success: false,
-        message: 'Her kalem için geçerli product_id ve quantity (>= 1) gereklidir.',
+        message: 'Each item requires a valid product_id and quantity (>= 1).',
       });
     }
   }
@@ -44,7 +44,7 @@ const createOrder = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    // ── Adım 1: Ürünleri doğrula (stok ve fiyat kontrolü) ─────────────────
+    // ── Step 1: Validate products (stock and price check) ─────────────────
     const productIds = items.map((i) => i.product_id);
     const placeholders = productIds.map(() => '?').join(', ');
     const [products] = await connection.execute(
@@ -52,18 +52,18 @@ const createOrder = async (req, res) => {
       productIds
     );
 
-    // Tüm ürünler bulundu mu?
+    // Were all products found?
     if (products.length !== productIds.length) {
       const foundIds = products.map((p) => p.product_id);
       const missingIds = productIds.filter((id) => !foundIds.includes(id));
       await connection.rollback();
       return res.status(404).json({
         success: false,
-        message: `Şu ürün ID'leri bulunamadı: ${missingIds.join(', ')}`,
+        message: `The following product ID(s) were not found: ${missingIds.join(', ')}`,
       });
     }
 
-    // Stok kontrolü ve toplam tutar hesapla
+    // Stock check and total amount calculation
     const productMap = {};
     products.forEach((p) => { productMap[p.product_id] = p; });
 
@@ -74,13 +74,13 @@ const createOrder = async (req, res) => {
         await connection.rollback();
         return res.status(409).json({
           success: false,
-          message: `"${product.name}" ürününde yetersiz stok. Mevcut: ${product.stock_quantity}, İstenen: ${item.quantity}`,
+          message: `Insufficient stock for "${product.name}". Available: ${product.stock_quantity}, Requested: ${item.quantity}`,
         });
       }
       total_amount += parseFloat(product.price) * item.quantity;
     }
 
-    // ── Adım 2: orders tablosuna ana sipariş kaydını ekle ─────────────────
+    // ── Step 2: Insert main order record into orders table ─────────────────
     const [orderResult] = await connection.execute(
       `INSERT INTO orders (table_id, user_id, total_amount, status)
        VALUES (?, ?, ?, 'Pending')`,
@@ -88,7 +88,7 @@ const createOrder = async (req, res) => {
     );
     const newOrderId = orderResult.insertId;
 
-    // ── Adım 3: Her kalem için order_items kaydı ekle ─────────────────────
+    // ── Step 3: Insert order_items rows for each item ─────────────────────
     for (const item of items) {
       const product = productMap[item.product_id];
       await connection.execute(
@@ -98,7 +98,7 @@ const createOrder = async (req, res) => {
       );
     }
 
-    // ── Adım 4: Stok miktarlarını düşür ───────────────────────────────────
+    // ── Step 4: Deduct stock quantities ───────────────────────────────────
     for (const item of items) {
       await connection.execute(
         `UPDATE products
@@ -108,18 +108,18 @@ const createOrder = async (req, res) => {
       );
     }
 
-    // ── Adım 5: Masayı "Occupied" yap ─────────────────────────────────────
+    // ── Step 5: Set table status to "Occupied" ────────────────────────────
     await connection.execute(
       `UPDATE dining_tables SET status = 'Occupied' WHERE table_id = ?`,
       [table_id]
     );
 
-    // ── Transaction'ı onayla ──────────────────────────────────────────────
+    // ── Commit the transaction ────────────────────────────────────────────
     await connection.commit();
 
     return res.status(201).json({
       success: true,
-      message: 'Sipariş başarıyla oluşturuldu.',
+      message: 'Order created successfully.',
       data: {
         order_id: newOrderId,
         table_id,
@@ -136,21 +136,21 @@ const createOrder = async (req, res) => {
     });
   } catch (error) {
     await connection.rollback();
-    console.error('createOrder hatası:', error.message);
+    console.error('createOrder error:', error.message);
     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
       return res.status(400).json({
         success: false,
-        message: 'Geçersiz table_id veya product_id.',
+        message: 'Invalid table_id or product_id.',
       });
     }
-    return res.status(500).json({ success: false, message: 'Sipariş oluşturulamadı.' });
+    return res.status(500).json({ success: false, message: 'Failed to create order.' });
   } finally {
     connection.release();
   }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/orders - Tüm siparişleri listele (Admin / Manager)
+// GET /api/orders - List all orders (Admin / Manager)
 // ─────────────────────────────────────────────────────────────────────────────
 const getAllOrders = async (req, res) => {
   try {
@@ -171,18 +171,18 @@ const getAllOrders = async (req, res) => {
     const [rows] = await pool.execute(sql);
     return res.status(200).json({ success: true, data: rows });
   } catch (error) {
-    console.error('getAllOrders hatası:', error.message);
-    return res.status(500).json({ success: false, message: 'Siparişler alınamadı.' });
+    console.error('getAllOrders error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve orders.' });
   }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/orders/:id - Sipariş detayı (kalemler dahil)
+// GET /api/orders/:id - Get order details (including items)
 // ─────────────────────────────────────────────────────────────────────────────
 const getOrderById = async (req, res) => {
   const { id } = req.params;
   try {
-    // Ana sipariş bilgisi
+    // Main order info
     const [orderRows] = await pool.execute(
       `SELECT o.order_id, o.total_amount, o.status, o.created_at,
               dt.table_id, dt.table_number,
@@ -194,10 +194,10 @@ const getOrderById = async (req, res) => {
       [id]
     );
     if (orderRows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Sipariş bulunamadı.' });
+      return res.status(404).json({ success: false, message: 'Order not found.' });
     }
 
-    // Sipariş kalemleri
+    // Order items
     const [itemRows] = await pool.execute(
       `SELECT oi.order_item_id, oi.quantity, oi.unit_price,
               p.product_id, p.name AS product_name
@@ -212,13 +212,13 @@ const getOrderById = async (req, res) => {
       data: { ...orderRows[0], items: itemRows },
     });
   } catch (error) {
-    console.error('getOrderById hatası:', error.message);
-    return res.status(500).json({ success: false, message: 'Sipariş alınamadı.' });
+    console.error('getOrderById error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve order.' });
   }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PATCH /api/orders/:id/status - Sipariş durumunu güncelle (Admin / Manager)
+// PATCH /api/orders/:id/status - Update order status (Admin / Manager)
 // Body: { "status": "Delivered" }
 // ─────────────────────────────────────────────────────────────────────────────
 const updateOrderStatus = async (req, res) => {
@@ -226,12 +226,12 @@ const updateOrderStatus = async (req, res) => {
   const { status } = req.body;
 
   if (!status) {
-    return res.status(400).json({ success: false, message: 'status alanı zorunludur.' });
+    return res.status(400).json({ success: false, message: 'status field is required.' });
   }
   if (!VALID_ORDER_STATUSES.includes(status)) {
     return res.status(400).json({
       success: false,
-      message: `Geçersiz durum. İzin verilen değerler: ${VALID_ORDER_STATUSES.join(', ')}`,
+      message: `Invalid status. Allowed values: ${VALID_ORDER_STATUSES.join(', ')}`,
     });
   }
 
@@ -245,10 +245,10 @@ const updateOrderStatus = async (req, res) => {
     );
     if (result.affectedRows === 0) {
       await connection.rollback();
-      return res.status(404).json({ success: false, message: 'Sipariş bulunamadı.' });
+      return res.status(404).json({ success: false, message: 'Order not found.' });
     }
 
-    // Sipariş teslim edildi veya iptal edildi → masayı boşalt
+    // Order delivered or cancelled → free the table
     if (status === 'Delivered' || status === 'Cancelled') {
       const [orderRows] = await connection.execute(
         'SELECT table_id FROM orders WHERE order_id = ?',
@@ -265,13 +265,13 @@ const updateOrderStatus = async (req, res) => {
     await connection.commit();
     return res.status(200).json({
       success: true,
-      message: `Sipariş durumu "${status}" olarak güncellendi.`,
+      message: `Order status updated to "${status}".`,
       data: { order_id: Number(id), status },
     });
   } catch (error) {
     await connection.rollback();
-    console.error('updateOrderStatus hatası:', error.message);
-    return res.status(500).json({ success: false, message: 'Sipariş durumu güncellenemedi.' });
+    console.error('updateOrderStatus error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to update order status.' });
   } finally {
     connection.release();
   }

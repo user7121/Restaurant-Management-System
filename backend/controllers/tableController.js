@@ -1,11 +1,11 @@
 // controllers/tableController.js
-// Masa yönetimi - Admin ve Manager ortak yetkisi
+// Table management - Admin and Manager access
 
 const pool = require('../config/db');
 
 const VALID_STATUSES = ['Empty', 'Occupied'];
 
-// GET /api/tables - Tüm masaları listele
+// GET /api/tables - List all tables
 const getAllTables = async (req, res) => {
   try {
     const [rows] = await pool.execute(
@@ -13,12 +13,12 @@ const getAllTables = async (req, res) => {
     );
     return res.status(200).json({ success: true, data: rows });
   } catch (error) {
-    console.error('getAllTables hatası:', error.message);
-    return res.status(500).json({ success: false, message: 'Masalar alınamadı.' });
+    console.error('getAllTables error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve tables.' });
   }
 };
 
-// GET /api/tables/:id - Tek masa getir
+// GET /api/tables/:id - Get a single table
 const getTableById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -27,28 +27,28 @@ const getTableById = async (req, res) => {
       [id]
     );
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Masa bulunamadı.' });
+      return res.status(404).json({ success: false, message: 'Table not found.' });
     }
     return res.status(200).json({ success: true, data: rows[0] });
   } catch (error) {
-    console.error('getTableById hatası:', error.message);
-    return res.status(500).json({ success: false, message: 'Masa alınamadı.' });
+    console.error('getTableById error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve table.' });
   }
 };
 
-// PATCH /api/tables/:id/status - Masa durumunu güncelle (Admin / Manager)
-// Body: { "status": "Empty" } veya { "status": "Occupied" }
+// PATCH /api/tables/:id/status - Update table status (Admin / Manager)
+// Body: { "status": "Empty" } or { "status": "Occupied" }
 const updateTableStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
   if (!status) {
-    return res.status(400).json({ success: false, message: 'status alanı zorunludur.' });
+    return res.status(400).json({ success: false, message: 'status field is required.' });
   }
   if (!VALID_STATUSES.includes(status)) {
     return res.status(400).json({
       success: false,
-      message: `Geçersiz durum. İzin verilen değerler: ${VALID_STATUSES.join(', ')}`,
+      message: `Invalid status. Allowed values: ${VALID_STATUSES.join(', ')}`,
     });
   }
 
@@ -58,16 +58,16 @@ const updateTableStatus = async (req, res) => {
       [status, id]
     );
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Masa bulunamadı.' });
+      return res.status(404).json({ success: false, message: 'Table not found.' });
     }
     return res.status(200).json({
       success: true,
-      message: `Masa durumu "${status}" olarak güncellendi.`,
+      message: `Table status updated to "${status}".`,
       data: { table_id: Number(id), status },
     });
   } catch (error) {
-    console.error('updateTableStatus hatası:', error.message);
-    return res.status(500).json({ success: false, message: 'Masa durumu güncellenemedi.' });
+    console.error('updateTableStatus error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to update table status.' });
   }
 };
 

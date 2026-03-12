@@ -1,11 +1,11 @@
 // server.js
-// Express uygulama giriş noktası
+// Express application entry point
 
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const authRoutes    = require('./routes/authRoutes');
+const authRoutes     = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes  = require('./routes/productRoutes');
 const tableRoutes    = require('./routes/tableRoutes');
@@ -22,11 +22,11 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Postman gibi origin olmayan isteklere izin ver (geliştirme ortamı için)
+      // Allow requests with no origin (e.g. Postman) in development
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error(`CORS politikası tarafından engellendi: ${origin}`));
+        callback(new Error(`Blocked by CORS policy: ${origin}`));
       }
     },
     credentials: true,
@@ -43,35 +43,35 @@ app.use('/api/products',   productRoutes);
 app.use('/api/tables',     tableRoutes);
 app.use('/api/orders',     orderRoutes);
 
-// Sağlık kontrolü (health check) endpoint
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Restoran Yönetim Sistemi API çalışıyor.',
+    message: 'Restaurant Management System API is running.',
     timestamp: new Date().toISOString(),
   });
 });
 
-// 404 - Tanımsız route yakalayıcı
+// 404 - Unknown route handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: `Endpoint bulunamadı: ${req.method} ${req.originalUrl}`,
+    message: `Endpoint not found: ${req.method} ${req.originalUrl}`,
   });
 });
 
-// Global hata yakalayıcı
+// Global error handler
 app.use((err, req, res, next) => {
-  console.error('Sunucu Hatası:', err.stack);
+  console.error('Server Error:', err.stack);
   res.status(500).json({
     success: false,
-    message: 'Sunucu tarafında beklenmeyen bir hata oluştu.',
+    message: 'An unexpected error occurred on the server.',
     error: process.env.NODE_ENV === 'development' ? err.message : undefined,
   });
 });
 
-// ─── Sunucuyu Başlat ──────────────────────────────────────────────────────────
+// ─── Start Server ─────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`🚀 Sunucu http://localhost:${PORT} adresinde çalışıyor.`);
-  console.log(`📌 Ortam: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🚀 Server is running at http://localhost:${PORT}`);
+  console.log(`📌 Environment: ${process.env.NODE_ENV || 'development'}`);
 });

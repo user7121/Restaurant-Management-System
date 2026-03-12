@@ -9,16 +9,16 @@ const {
   deleteCategory,
 } = require('../controllers/categoryController');
 
-// GET /api/categories     - Herkes görebilir (token gerekli)
+// GET /api/categories        - All authenticated users
 router.get('/', verifyToken, getAllCategories);
 
-// POST /api/categories    - Sadece Admin
+// POST /api/categories       - Admin only
 router.post('/', verifyToken, checkRole(['Admin']), createCategory);
 
-// PUT /api/categories/:id - Sadece Admin
+// PUT /api/categories/:id    - Admin only
 router.put('/:id', verifyToken, checkRole(['Admin']), updateCategory);
 
-// DELETE /api/categories/:id - Sadece Admin
+// DELETE /api/categories/:id - Admin only
 router.delete('/:id', verifyToken, checkRole(['Admin']), deleteCategory);
 
 module.exports = router;

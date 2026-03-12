@@ -9,16 +9,16 @@ const {
   updateOrderStatus,
 } = require('../controllers/orderController');
 
-// POST /api/orders         - Tüm yetkili kullanıcılar sipariş oluşturabilir
+// POST /api/orders              - All authenticated users can create an order
 router.post('/', verifyToken, createOrder);
 
-// GET /api/orders          - Sadece Admin ve Manager
+// GET /api/orders               - Admin and Manager only
 router.get('/', verifyToken, checkRole(['Admin', 'Manager']), getAllOrders);
 
-// GET /api/orders/:id      - Sadece Admin ve Manager
+// GET /api/orders/:id           - Admin and Manager only
 router.get('/:id', verifyToken, checkRole(['Admin', 'Manager']), getOrderById);
 
-// PATCH /api/orders/:id/status - Sadece Admin ve Manager
+// PATCH /api/orders/:id/status  - Admin and Manager only
 router.patch('/:id/status', verifyToken, checkRole(['Admin', 'Manager']), updateOrderStatus);
 
 module.exports = router;

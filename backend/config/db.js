@@ -1,5 +1,5 @@
 // config/db.js
-// MySQL bağlantı havuzu (connection pool) - mysql2/promise kullanır
+// MySQL connection pool - uses mysql2/promise
 
 const mysql = require('mysql2/promise');
 require('dotenv').config();
@@ -16,14 +16,14 @@ const pool = mysql.createPool({
   charset: 'utf8mb4',
 });
 
-// Başlangıçta bağlantıyı doğrula
+// Verify connection on startup
 (async () => {
   try {
     const connection = await pool.getConnection();
-    console.log('✅ MySQL veritabanına başarıyla bağlanıldı.');
+    console.log('✅ Successfully connected to MySQL database.');
     connection.release();
   } catch (error) {
-    console.error('❌ MySQL bağlantı hatası:', error.message);
+    console.error('❌ MySQL connection error:', error.message);
     process.exit(1);
   }
 })();

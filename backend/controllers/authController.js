@@ -1,39 +1,39 @@
 // controllers/authController.js
-// Auth işlemleri: register (Blok 2) ve login (Blok 3)
+// Auth operations: register (Block 2) and login (Block 3)
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BLOK 2: Kullanıcı Kayıt (Register)
+// BLOCK 2: User Registration (Register)
 // POST /api/auth/register
 // ─────────────────────────────────────────────────────────────────────────────
 const register = async (req, res) => {
   const { first_name, last_name, phone, email, role_id, username, password } = req.body;
 
-  // ── Temel alan doğrulaması ────────────────────────────────────────────────
+  // ── Basic field validation ────────────────────────────────────────────────
   if (!first_name || !last_name || !email || !role_id || !username || !password) {
     return res.status(400).json({
       success: false,
-      message: 'Lütfen tüm zorunlu alanları doldurun: first_name, last_name, email, role_id, username, password.',
+      message: 'Please fill in all required fields: first_name, last_name, email, role_id, username, password.',
     });
   }
 
   if (password.length < 6) {
     return res.status(400).json({
       success: false,
-      message: 'Şifre en az 6 karakter olmalıdır.',
+      message: 'Password must be at least 6 characters long.',
     });
   }
 
-  // MySQL transaction başlat
+  // Start MySQL transaction
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
 
-    // ── Adım 1: users tablosuna kişisel bilgileri ekle ────────────────────
+    // ── Step 1: Insert personal info into the users table ─────────────────
     const insertUserSQL = `
       INSERT INTO users (first_name, last_name, phone, email, role_id)
       VALUES (?, ?, ?, ?, ?)
@@ -48,23 +48,23 @@ const register = async (req, res) => {
 
     const newUserId = userResult.insertId;
 
-    // ── Adım 2: Şifreyi hashle ────────────────────────────────────────────
+    // ── Step 2: Hash the password ─────────────────────────────────────────
     const saltRounds = 12;
     const password_hash = await bcrypt.hash(password, saltRounds);
 
-    // ── Adım 3: auth_credentials tablosuna kimlik bilgilerini ekle ────────
+    // ── Step 3: Insert credentials into the auth_credentials table ────────
     const insertAuthSQL = `
       INSERT INTO auth_credentials (user_id, username, password_hash)
       VALUES (?, ?, ?)
     `;
     await connection.execute(insertAuthSQL, [newUserId, username, password_hash]);
 
-    // ── Transaction'ı onayla ──────────────────────────────────────────────
+    // ── Commit the transaction ────────────────────────────────────────────
     await connection.commit();
 
     return res.status(201).json({
       success: true,
-      message: 'Kullanıcı başarıyla kayıt edildi.',
+      message: 'User registered successfully.',
       data: {
         user_id: newUserId,
         first_name,
@@ -75,54 +75,54 @@ const register = async (req, res) => {
       },
     });
   } catch (error) {
-    // Hata durumunda transaction'ı geri al
+    // Roll back the transaction on error
     await connection.rollback();
-    console.error('Register hatası:', error.message);
+    console.error('Register error:', error.message);
 
-    // Duplicate entry hatasını kullanıcı dostu mesaja çevir
+    // Convert duplicate entry error to user-friendly message
     if (error.code === 'ER_DUP_ENTRY') {
-      const field = error.message.includes('email') ? 'E-posta' : 'Kullanıcı adı';
+      const field = error.message.includes('email') ? 'Email' : 'Username';
       return res.status(409).json({
         success: false,
-        message: `${field} zaten kayıtlı.`,
+        message: `${field} is already registered.`,
       });
     }
 
-    // Yabancı anahtar hatası (geçersiz role_id)
+    // Foreign key error (invalid role_id)
     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
       return res.status(400).json({
         success: false,
-        message: 'Geçersiz role_id: Bu ID ile eşleşen bir rol bulunamadı.',
+        message: 'Invalid role_id: No role found matching this ID.',
       });
     }
 
     return res.status(500).json({
       success: false,
-      message: 'Kayıt sırasında sunucu hatası oluştu.',
+      message: 'Server error occurred during registration.',
     });
   } finally {
-    // Bağlantıyı her durumda havuza geri bırak
+    // Always release the connection back to the pool
     connection.release();
   }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BLOK 3: Giriş (Login) ve JWT Üretimi
+// BLOCK 3: Login and JWT Generation
 // POST /api/auth/login
 // ─────────────────────────────────────────────────────────────────────────────
 const login = async (req, res) => {
   const { username, password } = req.body;
 
-  // ── Temel alan doğrulaması ────────────────────────────────────────────────
+  // ── Basic field validation ────────────────────────────────────────────────
   if (!username || !password) {
     return res.status(400).json({
       success: false,
-      message: 'Kullanıcı adı ve şifre zorunludur.',
+      message: 'Username and password are required.',
     });
   }
 
   try {
-    // ── auth_credentials + users + roles JOIN sorgusu ─────────────────────
+    // ── JOIN query: auth_credentials + users + roles ───────────────────────
     const loginSQL = `
       SELECT
         ac.auth_id,
@@ -143,48 +143,48 @@ const login = async (req, res) => {
     `;
     const [rows] = await pool.execute(loginSQL, [username]);
 
-    // Kullanıcı bulunamadı
+    // User not found
     if (rows.length === 0) {
       return res.status(401).json({
         success: false,
-        message: 'Geçersiz kullanıcı adı veya şifre.',
+        message: 'Invalid username or password.',
       });
     }
 
     const user = rows[0];
 
-    // ── Hesap kilitli mi? ─────────────────────────────────────────────────
+    // ── Is the account locked? ────────────────────────────────────────────
     if (user.is_locked) {
       return res.status(403).json({
         success: false,
-        message: 'Hesabınız kilitlenmiştir. Lütfen yöneticinizle iletişime geçin.',
+        message: 'Your account is locked. Please contact your administrator.',
       });
     }
 
-    // ── Kullanıcı aktif mi? ───────────────────────────────────────────────
+    // ── Is the user active? ───────────────────────────────────────────────
     if (!user.is_active) {
       return res.status(403).json({
         success: false,
-        message: 'Hesabınız pasif durumda. Lütfen yöneticinizle iletişime geçin.',
+        message: 'Your account is inactive. Please contact your administrator.',
       });
     }
 
-    // ── Şifre doğrulama ───────────────────────────────────────────────────
+    // ── Password verification ─────────────────────────────────────────────
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
-      // Başarısız giriş sayısını artır
+      // Increment failed login attempt counter
       await pool.execute(
         `UPDATE auth_credentials SET failed_attempts = failed_attempts + 1 WHERE user_id = ?`,
         [user.user_id]
       );
       return res.status(401).json({
         success: false,
-        message: 'Geçersiz kullanıcı adı veya şifre.',
+        message: 'Invalid username or password.',
       });
     }
 
-    // ── JWT payload'ı ─────────────────────────────────────────────────────
+    // ── JWT payload ───────────────────────────────────────────────────────
     const payload = {
       user_id: user.user_id,
       email: user.email,
@@ -196,7 +196,7 @@ const login = async (req, res) => {
       expiresIn: process.env.JWT_EXPIRES_IN || '24h',
     });
 
-    // Başarılı girişte: son giriş zamanını güncelle, başarısız sayacı sıfırla
+    // On successful login: update last_login and reset failed_attempts counter
     await pool.execute(
       `UPDATE auth_credentials SET last_login = NOW(), failed_attempts = 0 WHERE user_id = ?`,
       [user.user_id]
@@ -204,7 +204,7 @@ const login = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Giriş başarılı.',
+      message: 'Login successful.',
       data: {
         token,
         user: {
@@ -218,10 +218,10 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Login hatası:', error.message);
+    console.error('Login error:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Giriş sırasında sunucu hatası oluştu.',
+      message: 'Server error occurred during login.',
     });
   }
 };

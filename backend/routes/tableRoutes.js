@@ -8,13 +8,13 @@ const {
   updateTableStatus,
 } = require('../controllers/tableController');
 
-// GET /api/tables       - Herkes görebilir (token gerekli)
+// GET /api/tables               - All authenticated users
 router.get('/', verifyToken, getAllTables);
 
-// GET /api/tables/:id   - Herkes görebilir (token gerekli)
+// GET /api/tables/:id           - All authenticated users
 router.get('/:id', verifyToken, getTableById);
 
-// PATCH /api/tables/:id/status - Admin veya Manager
+// PATCH /api/tables/:id/status  - Admin or Manager
 router.patch('/:id/status', verifyToken, checkRole(['Admin', 'Manager']), updateTableStatus);
 
 module.exports = router;
