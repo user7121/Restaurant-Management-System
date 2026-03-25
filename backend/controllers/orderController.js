@@ -98,13 +98,20 @@ const createOrder = async (req, res) => {
       );
     }
 
-    // ── Step 4: Deduct stock quantities ───────────────────────────────────
+    // ── Step 4: Deduct stock quantities + log movements ────────────────────
     for (const item of items) {
       await connection.execute(
         `UPDATE products
          SET stock_quantity = stock_quantity - ?
          WHERE product_id = ?`,
         [item.quantity, item.product_id]
+      );
+
+      // Log stock movement
+      await connection.execute(
+        `INSERT INTO stock_movements (product_id, user_id, quantity, reason, reference_id, note)
+         VALUES (?, ?, ?, 'order', ?, ?)`,
+        [item.product_id, user_id, -item.quantity, newOrderId, `Order #${newOrderId} placed`]
       );
     }
 
@@ -239,27 +246,66 @@ const updateOrderStatus = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    const [result] = await connection.execute(
-      'UPDATE orders SET status = ? WHERE order_id = ?',
-      [status, id]
+    // Fetch current order info (status + table_id)
+    const [orderRows] = await connection.execute(
+      'SELECT order_id, table_id, status AS current_status FROM orders WHERE order_id = ?',
+      [id]
     );
-    if (result.affectedRows === 0) {
+    if (orderRows.length === 0) {
       await connection.rollback();
       return res.status(404).json({ success: false, message: 'Order not found.' });
     }
 
-    // Order delivered or cancelled → free the table
-    if (status === 'Delivered' || status === 'Cancelled') {
-      const [orderRows] = await connection.execute(
-        'SELECT table_id FROM orders WHERE order_id = ?',
+    const currentOrder = orderRows[0];
+
+    // Prevent re-cancelling or updating already cancelled/delivered orders
+    if (currentOrder.current_status === 'Cancelled' || currentOrder.current_status === 'Delivered') {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: `Cannot update status. Order is already "${currentOrder.current_status}".`,
+      });
+    }
+
+    // Update order status
+    await connection.execute(
+      'UPDATE orders SET status = ? WHERE order_id = ?',
+      [status, id]
+    );
+
+    // ── Cancelled → restore stock + log movements ─────────────────────────
+    if (status === 'Cancelled') {
+      const user_id = req.user.user_id;
+
+      // Get all items of this order
+      const [orderItems] = await connection.execute(
+        'SELECT product_id, quantity FROM order_items WHERE order_id = ?',
         [id]
       );
-      if (orderRows.length > 0) {
+
+      // Restore stock for each item and log the movement
+      for (const item of orderItems) {
         await connection.execute(
-          `UPDATE dining_tables SET status = 'Empty' WHERE table_id = ?`,
-          [orderRows[0].table_id]
+          `UPDATE products
+           SET stock_quantity = stock_quantity + ?
+           WHERE product_id = ?`,
+          [item.quantity, item.product_id]
+        );
+
+        await connection.execute(
+          `INSERT INTO stock_movements (product_id, user_id, quantity, reason, reference_id, note)
+           VALUES (?, ?, ?, 'cancellation', ?, ?)`,
+          [item.product_id, user_id, item.quantity, Number(id), `Order #${id} cancelled — stock restored`]
         );
       }
+    }
+
+    // Delivered or Cancelled → free the table
+    if (status === 'Delivered' || status === 'Cancelled') {
+      await connection.execute(
+        `UPDATE dining_tables SET status = 'Empty' WHERE table_id = ?`,
+        [currentOrder.table_id]
+      );
     }
 
     await connection.commit();
