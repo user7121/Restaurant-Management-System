@@ -2,7 +2,7 @@
 
 > **Academic Group Project** — Software Project Management Course | Agile Scrum | React + Node.js + MySQL
 
-[![CI/CD Pipeline](https://github.com/user7121/Restaurant-Management-System/blob/main/.github/ci-cd.yml/)](https://github.com/user7121/Restaurant-Management-System/blob/main/.github/workflows/ci-cd.yml)
+[![CI/CD Pipeline](https://github.com/user7121/Restaurant-Management-System/blob/main/.github/workflows/ci-cd.yml)](https://github.com/user7121/Restaurant-Management-System/blob/main/.github/workflows/ci-cd.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green)](https://nodejs.org)
 [![React](https://img.shields.io/badge/React-18-blue)](https://reactjs.org)
