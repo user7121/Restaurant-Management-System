@@ -25,6 +25,7 @@
 11. [Project Documentation](#11-project-documentation)
 12. [Security Notes](#12-security-notes)
 13. [Risk Register](#13-risk-register)
+14. [Demo Plan](#14-demo-plan)
 
 ---
 
@@ -272,7 +273,7 @@ push to main
     └─── [Job 5] pipeline-summary ── Reports final status
 ```
 
-View pipeline runs: [GitHub Actions →](https://github.com/your-org/restaurant-management-system/actions)
+View pipeline runs: [GitHub Actions →](https://github.com/user7121/Restaurant-Management-System/actions)
 
 ---
 
@@ -328,6 +329,112 @@ See [`docs/risk_register.docx`](docs/risk_register.docx) for the full risk regis
 | R-06 | ✅ CLOSED | CI/CD had no health-check gate | CLOSED |
 | R-07 | 🟢 LOW | Missing frontend form validation | OPEN |
 | R-08 | 🟡 MEDIUM | Bus factor = 1 per layer | OPEN |
+
+---
+
+## 14. Demo Plan
+
+> 🎯 Estimated duration: **~15 minutes**
+
+### Prerequisites
+Before the demo, make sure the full stack is running:
+```bash
+git clone https://github.com/user7121/Restaurant-Management-System.git
+cd Restaurant-Management-System
+docker compose up -d --build
+# Wait ~15s for MySQL to initialise
+```
+
+Open two tabs:
+- **App:** http://localhost:5173
+- **API Health:** http://localhost:5000/api/health
+
+---
+
+### Step 1 — CI/CD Pipeline (2 min)
+> Show the automated pipeline running on GitHub.
+
+1. Open [GitHub Actions](https://github.com/user7121/Restaurant-Management-System/actions)
+2. Click the latest successful run
+3. Walk through the 5 jobs:
+   - ✅ Backend — Lint & Unit Tests
+   - ✅ Frontend — Lint & Vite Build
+   - ✅ Docker — Build & Push Images
+   - ✅ Integration — Full Stack Health Check
+   - ✅ Pipeline Summary
+4. Show the Docker images published to GHCR
+
+---
+
+### Step 2 — Authentication (2 min)
+> Demonstrate JWT-based login and role separation.
+
+1. Open http://localhost:5173
+2. Log in with the **admin** account (credentials from seed file)
+3. Show the JWT token in browser DevTools → Application → Local Storage
+4. Show that accessing a protected route without a token returns `401 Unauthorized`
+
+---
+
+### Step 3 — Category & Product Management (3 min)
+> Full CRUD demo as Admin.
+
+1. Navigate to **Categories**
+   - Create a new category (e.g. "Desserts")
+   - Edit it, then delete it
+2. Navigate to **Products**
+   - Create a new product with stock quantity
+   - Edit price and stock level
+   - Show stock movement history
+
+---
+
+### Step 4 — Table & Order Management (4 min)
+> Core restaurant workflow.
+
+1. Navigate to **Tables**
+   - Show available tables (Empty status)
+   - Mark a table as **Occupied**
+2. Navigate to **Orders**
+   - Create a new order for the occupied table, add 2–3 items
+   - Show order status: `Pending`
+   - Advance status: `Pending` → `Preparing` → `Ready` → `Delivered`
+   - Verify the table status resets to **Empty** after delivery
+3. Show that stock quantities decreased automatically after the order
+
+---
+
+### Step 5 — Admin Dashboard (2 min)
+> Overview of system state.
+
+1. Navigate to **Dashboard**
+2. Show the stock status panel — highlight any low-stock items
+3. Show active orders summary
+
+---
+
+### Step 6 — API Health & Docker (2 min)
+> Show the running infrastructure.
+
+1. Open http://localhost:5000/api/health — show `{"success":true}`
+2. Run in terminal:
+   ```bash
+   docker compose ps
+   ```
+   Show all 3 containers running: `rms-mysql`, `rms-backend`, `rms-frontend`
+3. Show the architecture diagram from this README
+
+---
+
+### Demo Talking Points
+
+| Topic | Key Message |
+|-------|-------------|
+| **CI/CD** | Every push to `main` automatically tests, builds, and publishes Docker images |
+| **Security** | Passwords hashed with bcrypt (saltRounds=12), all routes protected with JWT |
+| **Transactions** | Order creation uses MySQL transactions — stock and order are atomic |
+| **Docker** | One command (`docker compose up`) spins up the entire stack |
+| **Agile** | 4 sprints tracked in Jira, incremental delivery each sprint |
 
 ---
 
