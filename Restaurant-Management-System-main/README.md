@@ -1,305 +1,336 @@
-# 🍽 Restaurant Management System
+# 🍽️ Restaurant Management System
+
+> **Academic Group Project** — Software Project Management Course | Agile Scrum | React + Node.js + MySQL
+
+[![CI/CD Pipeline](https://github.com/user7121/Restaurant-Management-System/blob/main/.github/workflows.yml/)](https://github.com/user7121/Restaurant-Management-System/blob/main/.github/workflows.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-18-blue)](https://reactjs.org)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)](https://mysql.com)
+
+---
+
+## 📋 Table of Contents
+
+1. [Executive Summary](#1-executive-summary)
+2. [Team](#2-team)
+3. [Tech Stack](#3-tech-stack)
+4. [Architecture](#4-architecture)
+5. [API Reference](#5-api-reference)
+6. [Database Schema](#6-database-schema)
+7. [Quick Start (Docker)](#7-quick-start-docker)
+8. [Quick Start (Manual)](#8-quick-start-manual)
+9. [CI/CD Pipeline](#9-cicd-pipeline)
+10. [Sprint Board](#10-sprint-board)
+11. [Project Documentation](#11-project-documentation)
+12. [Security Notes](#12-security-notes)
+13. [Risk Register](#13-risk-register)
+
+---
 
 ## 1. Executive Summary
 
-The Restaurant Management System is a web-based conceptual software project developed for the Software Project Management course. The project aims to design a scalable, secure, and user-friendly restaurant management platform that digitalizes core restaurant operations such as authentication, menu management, order processing, reporting, and financial analysis.
+The **Restaurant Management System (RMS)** is a full-stack web application that digitalises core restaurant operations:
 
-The project is managed using Agile Scrum methodology with Jira-based sprint planning, UML modeling, and structured academic documentation. The system is currently under active development and follows industry-standard software engineering practices, Agile project lifecycle management, and structured academic documentation.
----
-
-## 2. Product Description and Vision
-
-### 2.1 Problem Definition
-
-Traditional restaurant operations often rely on manual systems, spreadsheets, or disconnected tools that lead to inefficiencies, order errors, and poor data management. Restaurants require an integrated digital system to manage menu, orders, tables, and reports efficiently.
-
-### 2.2 Product Vision
-
-The vision of the Restaurant Management System is to provide a centralized web application that automates restaurant workflows, improves operational efficiency, and enhances decision-making through real-time data and analytics.
-
-### 2.3 Target Users
-
-* Restaurant Administrators
-* Restaurant Staff (Waiters/Cashiers)
-* Customers (QR Menu View)
-* System Managers
+| Module | Status |
+|--------|--------|
+| 🔐 JWT Authentication & RBAC | ✅ Complete |
+| 🗂️ Category Management (CRUD) | ✅ Complete |
+| 🍕 Product Management + Stock | ✅ Complete |
+| 🪑 Table Management | ✅ Complete |
+| 📦 Order Processing (transactional) | ✅ Complete |
+| 📊 Admin Dashboard | ✅ Complete |
+| 📈 Sales Reporting | 🔄 In Progress |
+| 📱 QR Menu for Customers | 🔄 Planned |
 
 ---
 
-## 3. Core Features and Capabilities
+## 2. Team
 
-The system includes the following core features that are currently being implemented and tested:
-
-* Secure User Authentication & Authorization (JWT-based)
-* Role-Based Access Control (Admin & Staff)
-* Menu & Product Management (CRUD)
-* Category and Stock Management
-* Order Creation & Order Status Tracking
-* Table Management System
-* Daily Sales Reporting
-* Best-Selling Product Analysis
-* Revenue & Profit Calculation
-* QR Menu Viewing for Customers
-
-All features are distributed across Agile sprints and tracked via Jira backlog.
+| Name | Role | Responsibility |
+|------|------|---------------|
+| **Batuhan İNAN** | Backend Developer | Node.js, Express, JWT Auth, REST API |
+| **Emir İnanç ŞEKER** | Frontend Developer | React, Vite, UI Components |
+| **İzzet Ali ARSLAN** | Database & Analytics | MySQL Schema, Reports, Stock Logic |
 
 ---
 
-## 4. Technical Architecture and Infrastructure
+## 3. Tech Stack
 
-### 4.1 System Architecture
+### Frontend
+- **React 18** + React Router v6
+- **Vite 5** (build tool)
+- Containerised with Docker (Node 18 Alpine)
 
-The project follows a three-tier web architecture:
+### Backend
+- **Node.js 18** + **Express 4**
+- **bcryptjs** (password hashing, saltRounds=12)
+- **jsonwebtoken** (JWT, 24h expiry)
+- **mysql2** (connection pool)
+- Containerised with Docker
 
-* Presentation Layer: React.js Frontend
-* Application Layer: Node.js (Express) RESTful API
-* Data Layer: MySQL Relational Database
+### Database
+- **MySQL 8.0**
+- 4 schema files with auto-init on `docker compose up`
+- Admin seed data pre-loaded
 
-### 4.2 Architectural Model
-
-* Client-Server Architecture
-* RESTful API Communication
-* Modular Component-Based Frontend (React)
-* Scalable Backend Services (Node.js)
-
-### 4.3 Data Flow Overview
-
-1. User logs into the system via secure authentication
-2. Backend validates credentials and generates JWT token
-3. Role permissions (Admin/Staff) are verified
-4. Authorized users access system modules (menu, orders, reports)
-5. Data is stored and retrieved securely from MySQL database
-6. Reports and analytics are generated dynamically
+### DevOps
+- **Docker** + **docker-compose**
+- **GitHub Actions** CI/CD (5-job pipeline)
+- **Jira** sprint board
 
 ---
 
-## 5. Technology Stack
+## 4. Architecture
 
-### 5.1 Frontend
+```
+┌─────────────────────────────────────────────────────────┐
+│                       Browser                           │
+│              React SPA  (port 5173)                     │
+└────────────────────────┬────────────────────────────────┘
+                         │ HTTP / REST + JWT Bearer
+┌────────────────────────▼────────────────────────────────┐
+│               Node.js / Express API                     │
+│                    (port 5000)                          │
+│                                                         │
+│  Routes: /api/auth  /api/categories  /api/products      │
+│          /api/tables  /api/orders  /api/health          │
+│                                                         │
+│  Middleware: CORS  │  express.json  │  verifyToken      │
+└────────────────────┬────────────────────────────────────┘
+                     │ mysql2 connection pool
+┌────────────────────▼────────────────────────────────────┐
+│                   MySQL 8.0                             │
+│                   (port 3307 on host)                   │
+│                                                         │
+│  Tables: roles, users, auth_credentials,                │
+│          categories, products, dining_tables,           │
+│          orders, order_items, stock_movements           │
+└─────────────────────────────────────────────────────────┘
+```
 
-* React.js
+### Role-Based Access Control
 
-### 5.2 Backend
-
-* Node.js
-
-### 5.3 Database
-
-* MySQL (Relational Database Management System)
-
-### 5.4 Project Management & Documentation Tools
-
-* Jira (Sprint Planning & Backlog Management)
-* GitHub (Version Control & Repository Management)
-* UML Diagrams (System Modeling)
-* Excel (Project Planning, Budget, Timeline)
-
----
-
-## 6. Security Architecture
-
-Security is a critical design component of the system. The planned security mechanisms include:
-
-* JWT-based authentication and session management
-* Secure password hashing using bcrypt
-* Role-Based Access Control (RBAC)
-* Protected API routes with middleware
-* Input validation against injection attacks
-* Secure environment variable configuration
-* No storage of plain-text passwords
-
-This architecture ensures data confidentiality, integrity, and controlled system access.
-
----
-
-## 7. Role and Authorization Management Model
-
-The system uses a Role-Based Access Control (RBAC) model:
-
-### Admin
-
-* Full system access
-* Manage menu, stock, reports, and users
-* View analytics and financial data
-
-### Staff
-
-* Manage orders
-* Manage tables
-* Access operational features
-
-### Customer
-
-* View QR Menu
-* Browse available products and create order
+| Role | Level | Permissions |
+|------|-------|-------------|
+| Customer | 1 | View QR menu, Create order |
+| Staff | 2 | Manage active orders, Manage tables |
+| Admin | 3 | Full system access (all of the above + menu, reports, stock) |
 
 ---
 
-## 8. Clearance Level System
+## 5. API Reference
 
-A hierarchical access structure is planned:
+All endpoints are prefixed with `/api`. Protected routes require:
+```
+Authorization: Bearer <JWT_TOKEN>
+```
 
-* Level 1 (Customer): QR Menu View, Create Order
-* Level 2 (Staff): View and manage active orders, Manage tables, Access operational features
-* Level 3 (Admin): Full System Control (Menu, Reports, Financial Analysis)
+### Auth
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/auth/register` | ❌ | Register new user |
+| POST | `/auth/login` | ❌ | Login, returns JWT |
 
-This layered model ensures operational security and controlled data access.
+### Categories
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/categories` | ✅ | List all categories |
+| POST | `/categories` | ✅ Admin | Create category |
+| PUT | `/categories/:id` | ✅ Admin | Update category |
+| DELETE | `/categories/:id` | ✅ Admin | Delete category |
 
----
+### Products
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/products` | ✅ | List all products with category |
+| GET | `/products/:id` | ✅ | Get single product |
+| POST | `/products` | ✅ Admin | Create product |
+| PUT | `/products/:id` | ✅ Admin | Update product |
+| DELETE | `/products/:id` | ✅ Admin | Delete product |
+| PATCH | `/products/:id/stock` | ✅ Admin | Manual stock adjustment |
+| GET | `/products/:id/stock-movements` | ✅ Admin | Stock movement history |
 
-## 9. User Experience and Interface
+### Tables
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/tables` | ✅ | List all tables |
+| GET | `/tables/:id` | ✅ | Get single table |
+| PATCH | `/tables/:id/status` | ✅ | Update table status (Empty/Occupied) |
 
-The system interface is designed using modern UI/UX principles:
+### Orders
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/orders` | ✅ | Create order (transactional) |
+| GET | `/orders` | ✅ Admin | List all orders |
+| GET | `/orders/:id` | ✅ | Get order with items |
+| PATCH | `/orders/:id/status` | ✅ Admin | Update order status |
 
-* Responsive web design (Desktop & Tablet compatible)
-* Dashboard-oriented interface
-* Simple navigation for non-technical staff
-* Fast order and table management screens
-* QR-based menu access for customers
-* Clean and minimal React component design
+**Order statuses:** `Pending` → `Preparing` → `Ready` → `Delivered` / `Cancelled`
 
----
-
-## 10. Installation and Deployment (Planned)
-
-### Development Environment Requirements
-
-* Node.js (v18+)
-* MySQL Server
-* npm / yarn
-* Modern Web Browser (Chrome, Edge, Firefox)
-
-## Sprint Board
-
-We used Jira for sprint planning and task tracking.
-
-Jira Link: [Resaurant Management System Jira](https://emirseker368.atlassian.net/jira/software/projects/RMS/boards/36/backlog)
-
-### Planned Setup Steps
-
-1. Clone the GitHub repository
-2. Install frontend and backend dependencies
-3. Configure environment variables (.env)
-4. Set up MySQL database schema
-5. Run backend server (Node.js)
-6. Run frontend application (React)
-
-Note: The system is currently in the development stage and is being actively implemented. Production deployment has not yet been completed.
-
----
-
-## 11. Integration and Scalability
-
-The system is being developed with scalability and future integration in mind:
-
-* RESTful API for third-party integrations
-* Modular backend architecture
-* Scalable MySQL database design
-* Cloud deployment compatibility (future scope)
-* Multi-branch restaurant support (future enhancement)
+### Health
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/health` | ❌ | API health check (used by CI) |
 
 ---
 
-## 12. Competitive Analysis and Differentiation
+## 6. Database Schema
 
-| Feature                   | Restaurant Management System | Traditional Restaurant Systems |
-|---------------------------|------------------------------|--------------------------------|
-| Web-Based Access          | Yes                          | No                             |
-| Role-Based Access Control | Yes                          | Limited                        |
-| Agile Project Planning    | Yes                          | No                             |
-| Integrated Reporting      | Yes                          | Partial                        |
-| QR Menu Integration       | Yes                          | No                             |
-| Academic Documentation    | Yes                          | No                             |
+Four SQL files initialise the database in order:
 
-The project differentiates itself by combining modern web technologies with structured Agile project management practices.
+```
+database/
+├── cafe_user_auth_role_schema.sql      # roles, users, auth_credentials tables
+├── mysql_rest_core_schema.sql          # categories, products, dining_tables, orders, order_items
+├── stock_movements_schema.sql          # stock_movements table
+└── mysql_auth_admin_seed.sql           # Default admin user seed data
+```
 
----
-
-## 13. Licensing and Commercial Model
-
-### License
-
-This project is developed as an academic group project for the Software Project Management course and is intended for educational purposes only.
-
-### Future Commercial Potential
-
-The system design can be extended into a commercial SaaS restaurant management platform with:
-
-* Subscription-based model
-* Multi-restaurant management
-* Advanced analytics dashboard
-* Mobile application integration
+Default admin credentials (development only):
+```
+username: admin
+password: (see mysql_auth_admin_seed.sql)
+```
 
 ---
 
-## 14. Technical Requirements
+## 7. Quick Start (Docker)
 
-### Server-Side
+> **Recommended.** Spins up MySQL + Backend + Frontend in one command.
 
-* Node.js (v18 or higher)
-* Express.js
-* MySQL Database Server
+```bash
+# 1. Clone
+git clone https://github.com/your-org/restaurant-management-system.git
+cd restaurant-management-system
 
-### Client-Side
+# 2. Start all services
+docker compose up -d --build
 
-* Modern Web Browser (Chrome, Firefox, Edge)
-* Internet Connection
-* Minimum Resolution: 1366x768
+# 3. Wait ~15 seconds for MySQL to initialise, then open:
+#    Frontend  → http://localhost:5173
+#    API       → http://localhost:5000/api/health
+#    MySQL     → localhost:3307 (root / pass)
+```
 
-### Development Requirements
-
-* GitHub Repository Access
-* Jira Project Board
-* UML Documentation
-* Excel Planning & Budget Files
-
----
-
-## 🧩 UML & System Modeling
-
-A Use Case Diagram has been designed to model system interactions between actors and core functionalities.
-
-### Identified Actors
-
-* Admin
-* Staff
-* Customer
-
-### Main Use Cases
-
-* Login System
-* Manage Menu
-* Manage Stock
-* Create Order
-* View Reports
-* QR Menu View (Customer)
-
-The UML diagram ensures clear visualization of system scope, user roles, and functional boundaries in accordance with software engineering documentation standards.
-
-### System Use Case Diagram
-
-![UML Use Case Diagram](docs/UML_UseCase_RestaurantManagementSystem.png)
+Stop all services:
+```bash
+docker compose down        # stop containers
+docker compose down -v     # stop containers + remove DB volume
+```
 
 ---
 
-## 👥 Team & Project Context
+## 8. Quick Start (Manual)
 
-* Course: Software Project Management
-* Project Type: Academic Group Project
-* Methodology: Agile Scrum with Jira Tracking
-* Team Members:
-  - Batuhan İNAN – Backend Developer (Node.js)
-  - Emir İnanç ŞEKER – Frontend Developer (React)
-  - İzzet Ali ARSLAN – Database & Analytics Developer (MySQL & Reports)
-* Application Type: Web-Based System
-* Development Stack: React + Node.js + MySQL
-* Project Status: Under Development (Implementation Phase)
+### Prerequisites
+- Node.js 18+
+- MySQL Server 8.0 running on port 3306
 
-## 📁 Project Documentation
+### Database
+```bash
+mysql -u root -p < database/cafe_user_auth_role_schema.sql
+mysql -u root -p < database/mysql_rest_core_schema.sql
+mysql -u root -p < database/stock_movements_schema.sql
+mysql -u root -p < database/mysql_auth_admin_seed.sql
+```
 
-All project-related academic documents are organized in the `docs/` folder for structured access:
+### Backend
+```bash
+cd backend
+cp .env.example .env       # edit DB credentials and JWT_SECRET
+npm install
+npm run dev                # http://localhost:5000
+```
 
-- 📊 Project Planning Document: `docs/Restaurant_Project_Planning.xlsx`
-- 🧩 UML Use Case Diagram: `docs/UML_UseCase_RestaurantManagamentSystem.png`
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev                # http://localhost:5173
+```
 
-These documents include the 14-week project timeline, sprint planning, team roles, budget planning, and system modeling prepared in accordance with the Software Project Management course requirements.
+---
+
+## 9. CI/CD Pipeline
+
+The GitHub Actions workflow (`.github/workflows/ci-cd.yml`) runs **5 jobs** on every push to `main`:
+
+```
+push to main
+    │
+    ├─── [Job 1] backend-test ────── ESLint + Jest unit tests + MySQL service
+    │
+    ├─── [Job 2] frontend-build ──── ESLint + Vite production build
+    │
+    ├─── [Job 3] docker-build ────── Build & push images to GHCR (main only)
+    │         (needs jobs 1 & 2)
+    │
+    ├─── [Job 4] integration-test ── docker-compose up + curl /api/health 200
+    │         (needs jobs 1 & 2)
+    │
+    └─── [Job 5] pipeline-summary ── Reports final status
+```
+
+View pipeline runs: [GitHub Actions →](https://github.com/your-org/restaurant-management-system/actions)
+
+---
+
+## 10. Sprint Board
+
+Project managed with **Jira Scrum** methodology.
+
+🔗 **Sprint Board:** [https://emirseker368.atlassian.net/jira/software/projects/RMS/boards/36/backlog](https://emirseker368.atlassian.net/jira/software/projects/RMS/boards/36/backlog)
+
+### Sprint Overview
+| Sprint | Focus | Status |
+|--------|-------|--------|
+| Sprint 1 | Project setup, DB schema, Auth API | ✅ Done |
+| Sprint 2 | Product & Category CRUD, Frontend Login | ✅ Done |
+| Sprint 3 | Order Processing, Stock Management, Admin Dashboard | ✅ Done |
+| Sprint 4 | Sales Reporting, QR Menu, Polish & Tests | 🔄 Active |
+
+---
+
+## 11. Project Documentation
+
+```
+docs/
+├── UML_UseCase_RestaurantManagementSystem.png   # Use Case Diagram
+├── Smart_Restaurant_Project_Planning.xlsx       # 14-week timeline + budget
+└── risk_analysis.docx                           # Risk register
+```
+
+---
+
+## 12. Security Notes
+
+> ⚠️ **Before any production deployment:**
+
+1. **Change JWT_SECRET** — `docker-compose.yml` uses `change_me`. Move to `.env` or GitHub Secrets.
+2. **Change DB passwords** — `MYSQL_ROOT_PASSWORD: pass` is for development only.
+3. **Set `NODE_ENV=production`** — hides stack traces in API error responses.
+4. **Enable HTTPS** — place a reverse proxy (nginx/Caddy) in front of the backend.
+
+---
+
+## 13. Risk Register
+
+See [`docs/risk_register.docx`](docs/risk_register.docx) for the full risk register.
+
+| ID | Severity | Description | Status |
+|----|----------|-------------|--------|
+| R-01 | 🔴 HIGH | Database connection failure | OPEN |
+| R-02 | 🔴 HIGH | JWT secret hardcoded in docker-compose | OPEN |
+| R-03 | 🟡 MEDIUM | Stock concurrency / oversell | MITIGATED |
+| R-04 | 🟡 MEDIUM | Scope creep beyond sprint capacity | OPEN |
+| R-05 | 🟡 MEDIUM | No automated test suite | OPEN |
+| R-06 | ✅ CLOSED | CI/CD had no health-check gate | CLOSED |
+| R-07 | 🟢 LOW | Missing frontend form validation | OPEN |
+| R-08 | 🟡 MEDIUM | Bus factor = 1 per layer | OPEN |
+
+---
+
+## License
+
+This project is developed as an academic group project for the Software Project Management course and is intended for **educational purposes only**.
