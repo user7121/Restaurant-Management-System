@@ -173,7 +173,7 @@ The system interface is designed using modern UI/UX principles:
 
 We used Jira for sprint planning and task tracking.
 
-Jira Link: [https://Resaurant Management System Jira](https://emirseker368.atlassian.net/jira/software/projects/RMS/boards/36/backlog)
+Jira Link: [Resaurant Management System Jira](https://emirseker368.atlassian.net/jira/software/projects/RMS/boards/36/backlog)
 
 ### Planned Setup Steps
 
