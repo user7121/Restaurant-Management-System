@@ -169,6 +169,12 @@ The system interface is designed using modern UI/UX principles:
 * npm / yarn
 * Modern Web Browser (Chrome, Edge, Firefox)
 
+## Sprint Board
+
+We used Jira for sprint planning and task tracking.
+
+Jira Link: [https://Resaurant Management System Jira](https://emirseker368.atlassian.net/jira/software/projects/RMS/boards/36/backlog)
+
 ### Planned Setup Steps
 
 1. Clone the GitHub repository
