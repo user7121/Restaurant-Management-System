@@ -202,8 +202,7 @@ password: (see mysql_auth_admin_seed.sql)
 
 ```bash
 # 1. Clone
-git clone https://github.com/your-org/restaurant-management-system.git
-cd restaurant-management-system
+git clone https://github.com/user7121/Restaurant-Management-System.git
 
 # 2. Start all services
 docker compose up -d --build
