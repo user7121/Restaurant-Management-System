@@ -16,26 +16,78 @@ const VALID_ORDER_STATUSES = ['Pending', 'Preparing', 'Ready', 'Delivered', 'Can
 //   5. Set table status to "Occupied"
 //   Any failure → ROLLBACK
 // ─────────────────────────────────────────────────────────────────────────────
+async function validateProductsAndGetTotal(connection, items) {
+  const productIds = items.map((i) => i.product_id);
+  const placeholders = productIds.map(() => '?').join(', ');
+  const [products] = await connection.execute(
+    `SELECT product_id, name, price, stock_quantity FROM products WHERE product_id IN (${placeholders})`,
+    productIds
+  );
+
+  if (products.length !== productIds.length) {
+    const foundIds = products.map((p) => p.product_id);
+    const missingIds = productIds.filter((id) => !foundIds.includes(id));
+    throw new Error(`NOT_FOUND: The following product ID(s) were not found: ${missingIds.join(', ')}`);
+  }
+
+  const productMap = {};
+  products.forEach((p) => { productMap[p.product_id] = p; });
+
+  let total_amount = 0;
+  for (const item of items) {
+    const product = productMap[item.product_id];
+    if (product.stock_quantity < item.quantity) {
+      throw new Error(`INSUFFICIENT_STOCK: Insufficient stock for "${product.name}". Available: ${product.stock_quantity}, Requested: ${item.quantity}`);
+    }
+    total_amount += parseFloat(product.price) * item.quantity;
+  }
+
+  return { productMap, total_amount };
+}
+
+async function insertOrderAndItems(connection, table_id, user_id, total_amount, items, productMap) {
+  const [orderResult] = await connection.execute(
+    `INSERT INTO orders (table_id, user_id, total_amount, status) VALUES (?, ?, ?, 'Pending')`,
+    [table_id, user_id, total_amount.toFixed(2)]
+  );
+  const newOrderId = orderResult.insertId;
+
+  for (const item of items) {
+    const product = productMap[item.product_id];
+    await connection.execute(
+      `INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)`,
+      [newOrderId, item.product_id, item.quantity, product.price]
+    );
+  }
+  return newOrderId;
+}
+
+async function deductStockAndOccupyTable(connection, items, user_id, newOrderId, table_id) {
+  for (const item of items) {
+    await connection.execute(
+      `UPDATE products SET stock_quantity = stock_quantity - ? WHERE product_id = ?`,
+      [item.quantity, item.product_id]
+    );
+    await connection.execute(
+      `INSERT INTO stock_movements (product_id, user_id, quantity, reason, reference_id, note) VALUES (?, ?, ?, 'order', ?, ?)`,
+      [item.product_id, user_id, -item.quantity, newOrderId, `Order #${newOrderId} placed`]
+    );
+  }
+  await connection.execute(
+    `UPDATE dining_tables SET status = 'Occupied' WHERE table_id = ?`,
+    [table_id]
+  );
+}
+
 const createOrder = async (req, res) => {
   const { table_id, items } = req.body;
-  const user_id = req.user.user_id; // comes from verifyToken middleware
+  const user_id = req.user.user_id;
 
-  // ── Basic validation ──────────────────────────────────────────────────────
-  if (!table_id) {
-    return res.status(400).json({ success: false, message: 'table_id is required.' });
-  }
-  if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({
-      success: false,
-      message: 'items array must contain at least one product.',
-    });
-  }
+  if (!table_id) return res.status(400).json({ success: false, message: 'table_id is required.' });
+  if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ success: false, message: 'items array must contain at least one product.' });
   for (const item of items) {
     if (!item.product_id || !item.quantity || item.quantity < 1) {
-      return res.status(400).json({
-        success: false,
-        message: 'Each item requires a valid product_id and quantity (>= 1).',
-      });
+      return res.status(400).json({ success: false, message: 'Each item requires a valid product_id and quantity (>= 1).' });
     }
   }
 
@@ -44,84 +96,10 @@ const createOrder = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    // ── Step 1: Validate products (stock and price check) ─────────────────
-    const productIds = items.map((i) => i.product_id);
-    const placeholders = productIds.map(() => '?').join(', ');
-    const [products] = await connection.execute(
-      `SELECT product_id, name, price, stock_quantity FROM products WHERE product_id IN (${placeholders})`,
-      productIds
-    );
+    const { productMap, total_amount } = await validateProductsAndGetTotal(connection, items);
+    const newOrderId = await insertOrderAndItems(connection, table_id, user_id, total_amount, items, productMap);
+    await deductStockAndOccupyTable(connection, items, user_id, newOrderId, table_id);
 
-    // Were all products found?
-    if (products.length !== productIds.length) {
-      const foundIds = products.map((p) => p.product_id);
-      const missingIds = productIds.filter((id) => !foundIds.includes(id));
-      await connection.rollback();
-      return res.status(404).json({
-        success: false,
-        message: `The following product ID(s) were not found: ${missingIds.join(', ')}`,
-      });
-    }
-
-    // Stock check and total amount calculation
-    const productMap = {};
-    products.forEach((p) => { productMap[p.product_id] = p; });
-
-    let total_amount = 0;
-    for (const item of items) {
-      const product = productMap[item.product_id];
-      if (product.stock_quantity < item.quantity) {
-        await connection.rollback();
-        return res.status(409).json({
-          success: false,
-          message: `Insufficient stock for "${product.name}". Available: ${product.stock_quantity}, Requested: ${item.quantity}`,
-        });
-      }
-      total_amount += parseFloat(product.price) * item.quantity;
-    }
-
-    // ── Step 2: Insert main order record into orders table ─────────────────
-    const [orderResult] = await connection.execute(
-      `INSERT INTO orders (table_id, user_id, total_amount, status)
-       VALUES (?, ?, ?, 'Pending')`,
-      [table_id, user_id, total_amount.toFixed(2)]
-    );
-    const newOrderId = orderResult.insertId;
-
-    // ── Step 3: Insert order_items rows for each item ─────────────────────
-    for (const item of items) {
-      const product = productMap[item.product_id];
-      await connection.execute(
-        `INSERT INTO order_items (order_id, product_id, quantity, unit_price)
-         VALUES (?, ?, ?, ?)`,
-        [newOrderId, item.product_id, item.quantity, product.price]
-      );
-    }
-
-    // ── Step 4: Deduct stock quantities + log movements ────────────────────
-    for (const item of items) {
-      await connection.execute(
-        `UPDATE products
-         SET stock_quantity = stock_quantity - ?
-         WHERE product_id = ?`,
-        [item.quantity, item.product_id]
-      );
-
-      // Log stock movement
-      await connection.execute(
-        `INSERT INTO stock_movements (product_id, user_id, quantity, reason, reference_id, note)
-         VALUES (?, ?, ?, 'order', ?, ?)`,
-        [item.product_id, user_id, -item.quantity, newOrderId, `Order #${newOrderId} placed`]
-      );
-    }
-
-    // ── Step 5: Set table status to "Occupied" ────────────────────────────
-    await connection.execute(
-      `UPDATE dining_tables SET status = 'Occupied' WHERE table_id = ?`,
-      [table_id]
-    );
-
-    // ── Commit the transaction ────────────────────────────────────────────
     await connection.commit();
 
     return res.status(201).json({
@@ -144,12 +122,9 @@ const createOrder = async (req, res) => {
   } catch (error) {
     await connection.rollback();
     console.error('createOrder error:', error.message);
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid table_id or product_id.',
-      });
-    }
+    if (error.message.startsWith('NOT_FOUND:')) return res.status(404).json({ success: false, message: error.message.replace('NOT_FOUND: ', '') });
+    if (error.message.startsWith('INSUFFICIENT_STOCK:')) return res.status(409).json({ success: false, message: error.message.replace('INSUFFICIENT_STOCK: ', '') });
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') return res.status(400).json({ success: false, message: 'Invalid table_id or product_id.' });
     return res.status(500).json({ success: false, message: 'Failed to create order.' });
   } finally {
     connection.release();

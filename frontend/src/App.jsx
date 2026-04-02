@@ -4,6 +4,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import LoginPage from "./pages/Login";
 import CategoryManagement from "./components/CategoryManagement";
 import ProductManagement from "./components/product/ProductManagement";
+import TableDashboard from "./components/tables/TableDashboard";
+import POSDashboard from "./components/orders/POSDashboard";
 
 function App() {
   const RequireAuth = ({ children }) => {
@@ -19,6 +21,8 @@ function App() {
         <Route path="/admin" element={<RequireAuth><AdminDashboard /></RequireAuth>} />
         <Route path="/admin/categories" element={<RequireAuth><CategoryManagement /></RequireAuth>} />
         <Route path="/admin/products" element={<RequireAuth><ProductManagement /></RequireAuth>} />
+        <Route path="/admin/tables" element={<RequireAuth><TableDashboard /></RequireAuth>} />
+        <Route path="/admin/pos/:tableId" element={<RequireAuth><POSDashboard /></RequireAuth>} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
