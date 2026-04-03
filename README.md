@@ -35,12 +35,13 @@ The **Restaurant Management System (RMS)** is a full-stack web application that 
 
 | Module | Status |
 |--------|--------|
-| 🔐 JWT Authentication & RBAC | ✅ Complete |
+| 🔐 JWT Authentication & RBAC | ✅ Complete (Redesigned Login UI) |
 | 🗂️ Category Management (CRUD) | ✅ Complete |
-| 🍕 Product Management + Stock | ✅ Complete |
+| 🍕 Product Management + Stock | ✅ Complete (Redesigned Premium UI) |
 | 🪑 Table Management | ✅ Complete |
 | 📦 Order Processing (transactional) | ✅ Complete |
 | 📊 Admin Dashboard | ✅ Complete |
+| 🎨 Premium Dark Theme UI | ✅ Complete |
 | 📈 Sales Reporting | 🔄 In Progress |
 | 📱 QR Menu for Customers | 🔄 Planned |
 
@@ -50,9 +51,9 @@ The **Restaurant Management System (RMS)** is a full-stack web application that 
 
 | Name | Role | Responsibility |
 |------|------|---------------|
-| **Batuhan İNAN** | Backend Developer | Node.js, Express, JWT Auth, REST API |
-| **Emir İnanç ŞEKER** | Frontend Developer | React, Vite, UI Components |
-| **İzzet Ali ARSLAN** | Database & Analytics | MySQL Schema, Reports, Stock Logic |
+| **** | Backend Developer | Node.js, Express, JWT Auth, REST API |
+| **** | Frontend Developer | React, Vite, UI Components |
+| **** | Database & Analytics | MySQL Schema, Reports, Stock Logic |
 
 ---
 
@@ -61,7 +62,8 @@ The **Restaurant Management System (RMS)** is a full-stack web application that 
 ### Frontend
 - **React 18** + React Router v6
 - **Vite 5** (build tool)
-- Containerised with Docker (Node 18 Alpine)
+- Custom CSS variable-based Premium Dark Theme
+- Containerised with Docker (Node 18 Alpine) with live-reload (HMR) volume mounts
 
 ### Backend
 - **Node.js 18** + **Express 4**
@@ -198,7 +200,7 @@ password: (see mysql_auth_admin_seed.sql)
 
 ## 7. Quick Start (Docker)
 
-> **Recommended.** Spins up MySQL + Backend + Frontend in one command.
+> **Recommended.** Spins up MySQL + Backend + Frontend in one command. The frontend includes volume mounts, giving you automatic live-reloading (HMR) when you edit files.
 
 ```bash
 # 1. Clone
