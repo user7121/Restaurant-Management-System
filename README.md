@@ -51,9 +51,9 @@ The **Restaurant Management System (RMS)** is a full-stack web application that 
 
 | Name | Role | Responsibility |
 |------|------|---------------|
-| **** | Backend Developer | Node.js, Express, JWT Auth, REST API |
-| **** | Frontend Developer | React, Vite, UI Components |
-| **** | Database & Analytics | MySQL Schema, Reports, Stock Logic |
+| **Batuhan İNAN** | Backend Developer | Node.js, Express, JWT Auth, REST API |
+| **Emir İnanç ŞEKER** | Frontend Developer | React, Vite, UI Components |
+| **İzzet Ali ARSLAN** | Database & Analytics | MySQL Schema, Reports, Stock Logic |
 
 ---
 
