@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("AdminPass123!");
+  // Ensure the input fields are empty by default
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -38,37 +39,65 @@ const LoginPage = () => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", fontFamily: "var(--font-family)" }}>
       <form
         onSubmit={handleSubmit}
-        style={{ width: 360, background: "#fff", padding: 20, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
+        className="animate-fade-in-up"
+        style={{ width: "380px", background: "var(--surface-900)", padding: "32px", borderRadius: "16px", boxShadow: "0 10px 40px rgba(0,0,0,0.4)", border: "1px solid var(--surface-800)" }}
       >
-        <h2 style={{ marginTop: 0 }}>Login</h2>
-        <p style={{ margin: "0 0 16px", color: "#6b7280", fontSize: 14 }}>
-          Test account: <code>admin</code> / <code>AdminPass123!</code>
-        </p>
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: "linear-gradient(135deg, var(--primary-500), var(--purple-500))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", margin: "0 auto 12px" }}>
+            🍽️
+          </div>
+          <h2 style={{ margin: "0 0 6px", fontSize: "24px", fontWeight: "800", color: "var(--surface-50)", letterSpacing: "-0.5px" }}>Restaurant Management System</h2>
+          <p style={{ margin: 0, color: "var(--surface-400)", fontSize: "14px" }}>Sign in to access your dashboard</p>
+        </div>
 
-        <label style={{ display: "block", marginBottom: 8, fontSize: 14 }}>Username</label>
-        <input
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          style={{ width: "100%", padding: 10, marginBottom: 14 }}
-        />
+        <div style={{ marginBottom: "20px", padding: "12px 14px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "10px", color: "var(--primary-300)", fontSize: "13px", lineHeight: "1.5" }}>
+          <strong>Test account:</strong><br />
+          <code style={{ background: "rgba(0,0,0,0.2)", padding: "2px 6px", borderRadius: "4px", color: "var(--primary-200)" }}>admin</code> / <code style={{ background: "rgba(0,0,0,0.2)", padding: "2px 6px", borderRadius: "4px", color: "var(--primary-200)" }}>AdminPass123!</code>
+        </div>
 
-        <label style={{ display: "block", marginBottom: 8, fontSize: 14 }}>Password</label>
-        <input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          type="password"
-          style={{ width: "100%", padding: 10, marginBottom: 14 }}
-        />
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "24px" }}>
+          <div>
+            <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: "600", color: "var(--surface-300)" }}>Username</label>
+            <input
+              autoFocus
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
+              style={{ width: "100%", padding: "12px 14px", background: "var(--surface-800)", border: "1.5px solid var(--surface-700)", borderRadius: "10px", color: "var(--surface-100)", fontSize: "14px", outline: "none", boxSizing: "border-box", transition: "all 0.2s", fontFamily: "var(--font-family)" }}
+              onFocus={e=>{e.target.style.borderColor="var(--primary-500)"; e.target.style.boxShadow="0 0 0 3px rgba(99,102,241,0.15)";}}
+              onBlur={e=>{e.target.style.borderColor="var(--surface-700)"; e.target.style.boxShadow="none";}}
+            />
+          </div>
 
-        {error ? <div style={{ color: "crimson", marginBottom: 12 }}>{error}</div> : null}
+          <div>
+            <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: "600", color: "var(--surface-300)" }}>Password</label>
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              placeholder="••••••••"
+              style={{ width: "100%", padding: "12px 14px", background: "var(--surface-800)", border: "1.5px solid var(--surface-700)", borderRadius: "10px", color: "var(--surface-100)", fontSize: "14px", outline: "none", boxSizing: "border-box", transition: "all 0.2s", fontFamily: "var(--font-family)" }}
+              onFocus={e=>{e.target.style.borderColor="var(--primary-500)"; e.target.style.boxShadow="0 0 0 3px rgba(99,102,241,0.15)";}}
+              onBlur={e=>{e.target.style.borderColor="var(--surface-700)"; e.target.style.boxShadow="none";}}
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div style={{ padding: "12px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "10px", color: "var(--danger-400)", fontSize: "13px", fontWeight: "500", marginBottom: "20px", textAlign: "center" }}>
+            ⚠ {error}
+          </div>
+        )}
 
         <button
           type="submit"
-          disabled={loading}
-          style={{ width: "100%", padding: 10, background: "#2563eb", color: "#fff", border: 0, borderRadius: 6, cursor: loading ? "not-allowed" : "pointer" }}
+          disabled={loading || !username || !password}
+          style={{ width: "100%", padding: "12px", background: (loading || !username || !password) ? "var(--primary-800)" : "var(--primary-600)", color: "#fff", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: (loading || !username || !password) ? "not-allowed" : "pointer", transition: "all 0.2s", boxShadow: (loading || !username || !password) ? "none" : "0 4px 14px rgba(99,102,241,0.3)" }}
+          onMouseEnter={e=>{ if(!loading && username && password) { e.currentTarget.style.background="var(--primary-500)"; e.currentTarget.style.boxShadow="0 6px 20px rgba(99,102,241,0.45)"; } }}
+          onMouseLeave={e=>{ if(!loading && username && password) { e.currentTarget.style.background="var(--primary-600)"; e.currentTarget.style.boxShadow="0 4px 14px rgba(99,102,241,0.3)"; } }}
         >
           {loading ? "Signing in..." : "Sign in"}
         </button>
@@ -78,4 +107,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-

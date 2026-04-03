@@ -57,6 +57,9 @@ services:
       - CHOKIDAR_USEPOLLING=true
     ports:
       - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
 volumes:
   rms_db_data:
