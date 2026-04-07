@@ -6,13 +6,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: pass
       MYSQL_DATABASE: cafe_restaurant_management
-      # Optional: avoid auth edge cases
-      # MYSQL_AUTHENTICATION_PLUGIN: mysql_native_password
     ports:
-      # Avoid conflict with any existing mysql container on host port 3306
       - "3307:3306"
     volumes:
-      # Init schema on first startup
       - ./database/cafe_user_auth_role_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./database/mysql_rest_core_schema.sql:/docker-entrypoint-initdb.d/02-rest-core-schema.sql:ro
       - ./database/stock_movements_schema.sql:/docker-entrypoint-initdb.d/03-stock-movements.sql:ro
@@ -42,7 +38,7 @@ services:
       JWT_SECRET: change_me
       JWT_EXPIRES_IN: 24h
       NODE_ENV: development
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
     ports:
       - "5000:5000"
 
@@ -55,12 +51,28 @@ services:
       - backend
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - VITE_CUSTOMER_APP_URL=http://localhost:5174
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
 
+  customer-app:
+    build:
+      context: ./customer-app
+    container_name: rms-customer-app
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=http://localhost:5000
+    ports:
+      - "5174:5174"
+    volumes:
+      - ./customer-app:/app
+      - /app/node_modules
+
 volumes:
   rms_db_data:
-

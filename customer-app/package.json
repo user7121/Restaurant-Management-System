@@ -1,15 +1,14 @@
 {
-  "name": "restaurant-management-frontend",
+  "name": "customer-app",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5173 --strictPort",
+    "dev": "vite --port 5174 --strictPort",
     "build": "vite build",
-    "preview": "vite preview --port 5173 --strictPort"
+    "preview": "vite preview --port 5174 --strictPort"
   },
   "dependencies": {
-    "qrcode.react": "^4.2.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.0.0"

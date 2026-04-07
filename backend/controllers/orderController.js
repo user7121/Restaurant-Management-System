@@ -131,6 +131,80 @@ const createOrder = async (req, res) => {
   }
 };
 
+const createPublicOrder = async (req, res) => {
+  const { table_id, items } = req.body;
+
+  if (!table_id) return res.status(400).json({ success: false, message: 'table_id is required.' });
+  if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ success: false, message: 'items array must contain at least one product.' });
+  for (const item of items) {
+    if (!item.product_id || !item.quantity || item.quantity < 1) {
+      return res.status(400).json({ success: false, message: 'Each item requires a valid product_id and quantity (>= 1).' });
+    }
+  }
+
+  const connection = await pool.getConnection();
+
+  try {
+    // Check if table already has a Pending or Preparing order
+    const [existingOrders] = await connection.execute(
+      `SELECT order_id FROM orders WHERE table_id = ? AND status IN ('Pending', 'Preparing') LIMIT 1`,
+      [table_id]
+    );
+
+    if (existingOrders.length > 0) {
+      connection.release();
+      return res.status(409).json({ success: false, message: 'This table already has an active order being prepared.' });
+    }
+
+    // Get Guest user_id
+    const [guestUser] = await connection.execute(
+      `SELECT user_id FROM users WHERE email = 'guest@example.com' LIMIT 1`
+    );
+    
+    if (guestUser.length === 0) {
+       connection.release();
+       return res.status(500).json({ success: false, message: 'Guest user not found in the system.' });
+    }
+    
+    const user_id = guestUser[0].user_id;
+
+    await connection.beginTransaction();
+
+    const { productMap, total_amount } = await validateProductsAndGetTotal(connection, items);
+    const newOrderId = await insertOrderAndItems(connection, table_id, user_id, total_amount, items, productMap);
+    await deductStockAndOccupyTable(connection, items, user_id, newOrderId, table_id);
+
+    await connection.commit();
+
+    return res.status(201).json({
+      success: true,
+      message: 'Order created successfully.',
+      data: {
+        order_id: newOrderId,
+        table_id,
+        user_id,
+        total_amount: parseFloat(total_amount.toFixed(2)),
+        status: 'Pending',
+        items: items.map((item) => ({
+          product_id: item.product_id,
+          product_name: productMap[item.product_id].name,
+          quantity: item.quantity,
+          unit_price: parseFloat(productMap[item.product_id].price),
+        })),
+      },
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('createPublicOrder error:', error.message);
+    if (error.message.startsWith('NOT_FOUND:')) return res.status(404).json({ success: false, message: error.message.replace('NOT_FOUND: ', '') });
+    if (error.message.startsWith('INSUFFICIENT_STOCK:')) return res.status(409).json({ success: false, message: error.message.replace('INSUFFICIENT_STOCK: ', '') });
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') return res.status(400).json({ success: false, message: 'Invalid table_id or product_id.' });
+    return res.status(500).json({ success: false, message: 'Failed to create order.' });
+  } finally {
+    connection.release();
+  }
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/orders - List all orders (Admin / Manager)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -298,4 +372,4 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, getAllOrders, getOrderById, updateOrderStatus };
+module.exports = { createOrder, createPublicOrder, getAllOrders, getOrderById, updateOrderStatus };

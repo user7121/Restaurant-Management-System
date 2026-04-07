@@ -14,6 +14,20 @@ SELECT
   1
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@example.com');
 
+INSERT INTO roles (role_name, description)
+SELECT 'Guest', 'System user for public QR code orders'
+WHERE NOT EXISTS (SELECT 1 FROM roles WHERE role_name = 'Guest');
+
+INSERT INTO users (first_name, last_name, phone, email, role_id, is_active)
+SELECT
+  'Guest',
+  'User',
+  NULL,
+  'guest@example.com',
+  (SELECT role_id FROM roles WHERE role_name = 'Guest' LIMIT 1),
+  1
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'guest@example.com');
+
 INSERT INTO auth_credentials (user_id, username, password_hash)
 SELECT
   u.user_id,

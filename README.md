@@ -16,16 +16,17 @@
 2. [Team](#2-team)
 3. [Tech Stack](#3-tech-stack)
 4. [Architecture](#4-architecture)
-5. [API Reference](#5-api-reference)
-6. [Database Schema](#6-database-schema)
-7. [Quick Start (Docker)](#7-quick-start-docker)
-8. [Quick Start (Manual)](#8-quick-start-manual)
-9. [CI/CD Pipeline](#9-cicd-pipeline)
-10. [Sprint Board](#10-sprint-board)
-11. [Project Documentation](#11-project-documentation)
-12. [Security Notes](#12-security-notes)
-13. [Risk Register](#13-risk-register)
-14. [Demo Plan](#14-demo-plan)
+5. [QR Code Ordering System](#5-qr-code-ordering-system)
+6. [API Reference](#6-api-reference)
+7. [Database Schema](#7-database-schema)
+8. [Quick Start (Docker)](#8-quick-start-docker)
+9. [Quick Start (Manual)](#9-quick-start-manual)
+10. [CI/CD Pipeline](#10-cicd-pipeline)
+11. [Sprint Board](#11-sprint-board)
+12. [Project Documentation](#12-project-documentation)
+13. [Security Notes](#13-security-notes)
+14. [Risk Register](#14-risk-register)
+15. [Demo Plan](#15-demo-plan)
 
 ---
 
@@ -42,8 +43,8 @@ The **Restaurant Management System (RMS)** is a full-stack web application that 
 | 📦 Order Processing (transactional) | ✅ Complete |
 | 📊 Admin Dashboard | ✅ Complete |
 | 🎨 Premium Dark Theme UI | ✅ Complete |
+| 📱 QR Code Customer Ordering | ✅ Complete |
 | 📈 Sales Reporting | 🔄 In Progress |
-| 📱 QR Menu for Customers | 🔄 Planned |
 
 ---
 
@@ -87,29 +88,32 @@ The **Restaurant Management System (RMS)** is a full-stack web application that 
 ## 4. Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                       Browser                           │
-│              React SPA  (port 5173)                     │
-└────────────────────────┬────────────────────────────────┘
-                         │ HTTP / REST + JWT Bearer
-┌────────────────────────▼────────────────────────────────┐
-│               Node.js / Express API                     │
-│                    (port 5000)                          │
-│                                                         │
-│  Routes: /api/auth  /api/categories  /api/products      │
-│          /api/tables  /api/orders  /api/health          │
-│                                                         │
-│  Middleware: CORS  │  express.json  │  verifyToken      │
-└────────────────────┬────────────────────────────────────┘
-                     │ mysql2 connection pool
-┌────────────────────▼────────────────────────────────────┐
-│                   MySQL 8.0                             │
-│                   (port 3307 on host)                   │
-│                                                         │
-│  Tables: roles, users, auth_credentials,                │
-│          categories, products, dining_tables,           │
-│          orders, order_items, stock_movements           │
-└─────────────────────────────────────────────────────────┘
+ ┌──────────────────────┐        ┌─────────────────────────┐
+ │  Admin Dashboard     │        │  Customer App (QR)      │
+ │  React SPA :5173     │        │  React SPA :5174        │
+ └──────────┬───────────┘        └────────────┬────────────┘
+            │ REST + JWT Bearer               │ REST (public)
+            └──────────────┬─────────────────┘
+                           ▼
+         ┌─────────────────────────────────┐
+         │     Node.js / Express API       │
+         │          (port 5000)            │
+         │                                │
+         │  /api/auth    /api/categories   │
+         │  /api/products  /api/tables     │
+         │  /api/orders  /api/public/*     │
+         │  /api/health                   │
+         └──────────────┬─────────────────┘
+                        │ mysql2 pool
+         ┌──────────────▼─────────────────┐
+         │          MySQL 8.0             │
+         │       (port 3307 on host)      │
+         │                                │
+         │  roles, users, auth_credentials│
+         │  categories, products,          │
+         │  dining_tables, orders,         │
+         │  order_items, stock_movements   │
+         └────────────────────────────────┘
 ```
 
 ### Role-Based Access Control
@@ -122,7 +126,37 @@ The **Restaurant Management System (RMS)** is a full-stack web application that 
 
 ---
 
-## 5. API Reference
+## 5. QR Code Ordering System
+
+The QR ordering system lets customers browse the menu and place orders directly from their phone — no app install, no login required.
+
+### How it works
+
+1. **Admin generates a QR code** — In the admin dashboard under **Table Management**, click the 📱 **QR** button on any table to open a QR modal. Click **Print QR** or **Open Menu** to test it.
+2. **Customer scans the code** — The QR code encodes the URL `http://<customer-app>/<table_id>`. Any standard camera app can scan it.
+3. **Customer places an order** — The customer browses the menu, adds items to cart, and taps **Place Order**. The order is submitted to the backend without requiring authentication.
+4. **Admin sees the order instantly** — The order appears in the **Order Tracking** (Kanban board) under the **Pending** column. Staff advance it through `Preparing → Ready → Delivered`.
+
+### Public API endpoints (no auth required)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/public/categories` | Fetch all menu categories |
+| GET | `/api/public/products` | Fetch all products with stock |
+| POST | `/api/public/orders` | Submit a customer order |
+
+### Services
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Admin Dashboard | `5173` | Staff-facing management interface |
+| Customer App | `5174` | Public QR menu & ordering |
+| Backend API | `5000` | Shared REST API |
+| MySQL | `3307` | Database |
+
+---
+
+## 6. API Reference
 
 All endpoints are prefixed with `/api`. Protected routes require:
 ```
@@ -198,21 +232,22 @@ password: (see mysql_auth_admin_seed.sql)
 
 ---
 
-## 7. Quick Start (Docker)
+## 8. Quick Start (Docker)
 
-> **Recommended.** Spins up MySQL + Backend + Frontend in one command. The frontend includes volume mounts, giving you automatic live-reloading (HMR) when you edit files.
+> **Recommended.** Spins up MySQL + Backend + Admin Dashboard + Customer App in one command.
 
 ```bash
 # 1. Clone
 git clone https://github.com/user7121/Restaurant-Management-System.git
 
-# 2. Start all services
+# 2. Start all services (4 containers)
 docker compose up -d --build
 
 # 3. Wait ~15 seconds for MySQL to initialise, then open:
-#    Frontend  → http://localhost:5173
-#    API       → http://localhost:5000/api/health
-#    MySQL     → localhost:3307 (root / pass)
+#    Admin Dashboard  → http://localhost:5173
+#    Customer App     → http://localhost:5174/<table_id>
+#    API              → http://localhost:5000/api/health
+#    MySQL            → localhost:3307 (root / pass)
 ```
 
 Stop all services:
@@ -223,7 +258,7 @@ docker compose down -v     # stop containers + remove DB volume
 
 ---
 
-## 8. Quick Start (Manual)
+## 9. Quick Start (Manual)
 
 ### Prerequisites
 - Node.js 18+
@@ -245,11 +280,21 @@ npm install
 npm run dev                # http://localhost:5000
 ```
 
-### Frontend
+### Admin Frontend
 ```bash
 cd frontend
+cp .env.example .env       # optional: set VITE_CUSTOMER_APP_URL
 npm install
 npm run dev                # http://localhost:5173
+```
+
+### Customer App
+```bash
+cd customer-app
+cp .env.example .env       # optional: set VITE_API_URL
+npm install
+npm run dev                # http://localhost:5174
+# Open http://localhost:5174/1 to test Table 1
 ```
 
 ---
@@ -422,8 +467,22 @@ Open two tabs:
    ```bash
    docker compose ps
    ```
-   Show all 3 containers running: `rms-mysql`, `rms-backend`, `rms-frontend`
+   Show all 4 containers running: `rms-mysql`, `rms-backend`, `rms-frontend`, `rms-customer-app`
 3. Show the architecture diagram from this README
+
+---
+
+### Step 7 — QR Code Customer Ordering (3 min)
+> Demonstrate the end-to-end customer self-ordering flow.
+
+1. In the admin dashboard, navigate to **Tables**
+2. Click the **📱 QR** button on any table — show the QR modal
+3. Click **Open Menu** — the customer app opens in a new tab at `http://localhost:5174/<table_id>`
+4. Browse the menu, select items, open the cart, and click **Place Order**
+5. Switch back to the admin dashboard → **Order Tracking**
+6. Show the new order in the **Pending** column
+7. Advance it: `Pending → Preparing → Ready → Delivered`
+8. Show the table status resets to **Empty** automatically
 
 ---
 
