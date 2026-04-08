@@ -25,11 +25,11 @@
   --surface-300: #cbd5e1;
   --surface-400: #94a3b8;
   --surface-500: #64748b;
-  --surface-600: #475569;
-  --surface-700: #334155;
-  --surface-800: #1e293b;
-  --surface-900: #0f172a;
-  --surface-950: #020617;
+  --surface-600: #3A3A3A;
+  --surface-700: #2C2C2C;
+  --surface-800: #1E1E1E;
+  --surface-900: #121212;
+  --surface-950: #0A0A0A;
 
   /* Semantic */
   --success-50:  #ecfdf5;
@@ -260,4 +260,204 @@ img {
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-md);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THEME SYSTEM
+   The :root block above carries the *dark* defaults (already present).
+   The [data-theme="light"] block below overrides every surface token.
+   Interactive accent tokens (--primary-*, --success-*, --warning-*,
+   --danger-*, --info-*, --orange-*, --purple-*) are intentionally left
+   unchanged so buttons, badges, and status indicators keep their vivid
+   colours in both themes.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Global theme transition ──────────────────────────────────────────────── */
+/*
+   Applied on <html> rather than * so it activates before any child paints.
+   We only transition color-related properties to avoid animating layout.
+   The transition is suppressed during the very first load by the
+   .no-theme-transition class (added / removed in useTheme).
+*/
+html {
+  transition:
+    background-color var(--transition-normal),
+    color           var(--transition-normal);
+}
+
+/* Extend the smooth transition to all common surface elements. */
+body,
+aside,
+header,
+main,
+nav,
+section,
+article,
+div,
+span,
+p,
+h1, h2, h3, h4, h5, h6,
+a,
+button,
+input,
+select,
+textarea,
+table,
+th, td,
+li {
+  transition:
+    background-color var(--transition-normal),
+    color           var(--transition-normal),
+    border-color    var(--transition-normal),
+    box-shadow      var(--transition-normal);
+}
+
+/* ── Light Theme Overrides ────────────────────────────────────────────────── */
+[data-theme="light"] {
+  /* ── Surface scale (inverted) ─────────────────────────────────────────── */
+  --surface-50:   #1e293b;   /* darkest text  */
+  --surface-100:  #1e293b;   /* primary text  */
+  --surface-200:  #334155;   /* body text     */
+  --surface-300:  #475569;   /* secondary text */
+  --surface-400:  #64748b;   /* muted text    */
+  --surface-500:  #94a3b8;   /* placeholder   */
+  --surface-600:  #cbd5e1;   /* border light  */
+  --surface-700:  #e2e8f0;   /* divider       */
+  --surface-800:  #f1f5f9;   /* card bg alt   */
+  --surface-900:  #ffffff;   /* card bg       */
+  --surface-950:  #f8fafc;   /* page bg       */
+
+  /* ── Shadows (need more opacity on light bg) ──────────────────────────── */
+  --shadow-sm:  0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md:  0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg:  0 10px 15px -3px rgba(0, 0, 0, 0.10), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
+  --shadow-xl:  0 20px 25px -5px rgba(0, 0, 0, 0.10), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.18);
+}
+
+/* ── Light theme structural surface overrides ─────────────────────────────── */
+/* Sidebar */
+[data-theme="light"] aside {
+  background: linear-gradient(180deg, #f1f5f9 0%, #f8fafc 100%) !important;
+  border-right-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+/* Header */
+[data-theme="light"] header {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+/* Glass utility */
+[data-theme="light"] .glass {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .glass-light {
+  background: rgba(248, 250, 252, 0.6);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Skeleton shimmer */
+[data-theme="light"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    #e2e8f0 25%,
+    #cbd5e1 50%,
+    #e2e8f0 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* Scrollbar on light theme */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ── Theme Toggle Button ──────────────────────────────────────────────────── */
+.theme-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: rgba(148, 163, 184, 0.06);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--surface-400);
+  font-family: var(--font-family);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-bounce);
+  user-select: none;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.25);
+  color: var(--primary-400);
+  transform: scale(1.04);
+}
+
+.theme-toggle:active {
+  transform: scale(0.97);
+}
+
+/* The sliding pill track */
+.theme-toggle-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--surface-700);
+  transition: background var(--transition-normal);
+  flex-shrink: 0;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+[data-theme="light"] .theme-toggle-track {
+  background: var(--primary-500);
+  border-color: transparent;
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  transition: transform var(--transition-bounce);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  line-height: 1;
+}
+
+[data-theme="light"] .theme-toggle-thumb {
+  transform: translateX(16px);
+}
+
+/* Icon spin on toggle */
+.theme-icon {
+  display: inline-flex;
+  align-items: center;
+  transition: transform var(--transition-bounce), opacity var(--transition-fast);
+}
+
+.theme-toggle:hover .theme-icon {
+  transform: rotate(20deg);
 }

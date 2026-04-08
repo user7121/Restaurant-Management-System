@@ -1,3 +1,14 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  Restaurant Management System — docker-compose.yml           ║
+# ║                                                              ║
+# ║  QR CODE / MOBILE FIX:                                       ║
+# ║  Set HOST_IP to your machine's LAN IP before running:        ║
+# ║    export HOST_IP=$(hostname -I | awk '{print $1}')          ║
+# ║    docker compose up --build                                 ║
+# ║                                                              ║
+# ║  Or run the helper script:  ./scripts/start.sh               ║
+# ╚══════════════════════════════════════════════════════════════╝
+
 services:
   db:
     image: mysql:8.0
@@ -38,7 +49,15 @@ services:
       JWT_SECRET: change_me
       JWT_EXPIRES_IN: 24h
       NODE_ENV: development
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
+      # CORS: allow localhost AND the host machine's LAN IP on all relevant ports
+      ALLOWED_ORIGINS: >-
+        http://localhost:3000,
+        http://localhost:5173,
+        http://localhost:5174,
+        http://127.0.0.1:5173,
+        http://127.0.0.1:5174,
+        http://${HOST_IP:-localhost}:5173,
+        http://${HOST_IP:-localhost}:5174
     ports:
       - "5000:5000"
 
@@ -51,7 +70,9 @@ services:
       - backend
     environment:
       - CHOKIDAR_USEPOLLING=true
-      - VITE_CUSTOMER_APP_URL=http://localhost:5174
+      # Admin panel points to the LAN IP so QR links work from any device
+      - VITE_CUSTOMER_APP_URL=http://${HOST_IP:-localhost}:5174
+      - VITE_API_URL=http://${HOST_IP:-localhost}:5000
     ports:
       - "5173:5173"
     volumes:
@@ -67,7 +88,8 @@ services:
       - backend
     environment:
       - CHOKIDAR_USEPOLLING=true
-      - VITE_API_URL=http://localhost:5000
+      # Customer app hits the backend via the host's LAN IP
+      - VITE_API_URL=http://${HOST_IP:-localhost}:5000
     ports:
       - "5174:5174"
     volumes:

@@ -20,8 +20,36 @@ function getCategoryEmoji(name = '') {
   return CATEGORY_EMOJIS.default;
 }
 
-const PRODUCT_EMOJIS = ['🍔','🍕','🥗','🍝','🍜','🍱','🥩','🍗','🥪','🍣','🍲','🌮','🥙','🧆','🥓','🍟'];
-function getProductEmoji(id) { return PRODUCT_EMOJIS[(id - 1) % PRODUCT_EMOJIS.length]; }
+/* ── Product emoji map — corrected per requirements ──────── */
+// Keys are lowercased product name substrings → emoji
+const PRODUCT_NAME_EMOJIS = {
+  americano: '☕',
+  latte:     '☕',
+  cappuccino:'☕',
+  espresso:  '☕',
+  coffee:    '☕',
+  cheesecake:'🍰',
+  cake:      '🍰',
+};
+
+const PRODUCT_EMOJIS_FALLBACK = ['🍔','🍕','🥗','🍝','🍜','🍱','🥩','🍗','🥪','🍣','🍲','🌮','🥙','🧆','🥓','🍟'];
+
+function getProductEmoji(product) {
+  const nameLower = (product.name || '').toLowerCase();
+  for (const [key, emoji] of Object.entries(PRODUCT_NAME_EMOJIS)) {
+    if (nameLower.includes(key)) return emoji;
+  }
+  return PRODUCT_EMOJIS_FALLBACK[(product.product_id - 1) % PRODUCT_EMOJIS_FALLBACK.length];
+}
+
+/* ── Theme management ────────────────────────────────────── */
+function getInitialTheme() {
+  try {
+    return localStorage.getItem('rms-theme') || 'dark';
+  } catch {
+    return 'dark';
+  }
+}
 
 export default function MenuPage() {
   const { tableId } = useParams();
@@ -32,10 +60,20 @@ export default function MenuPage() {
   const [error, setError]           = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
 
-  const [cart, setCart]             = useState([]); // [{ product_id, name, price, quantity, emoji }]
+  const [cart, setCart]             = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [toast, setToast]           = useState(null);
   const [orderResult, setOrderResult] = useState(null);
+
+  // Theme state
+  const [theme, setTheme] = useState(getInitialTheme);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('rms-theme', theme); } catch {}
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
   /* ── Load data ─────────────────────────────────────────── */
   const load = useCallback(async () => {
@@ -44,7 +82,7 @@ export default function MenuPage() {
       const [cats, prods] = await Promise.all([fetchCategories(), fetchProducts()]);
       setCategories(cats);
       setProducts(prods);
-      if (cats.length > 0) setActiveCategory(null); // "All" selected by default
+      if (cats.length > 0) setActiveCategory(null);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -63,7 +101,7 @@ export default function MenuPage() {
     setCart((prev) => {
       const existing = prev.find((i) => i.product_id === product.product_id);
       if (existing) return prev.map((i) => i.product_id === product.product_id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { product_id: product.product_id, name: product.name, price: parseFloat(product.price), quantity: 1, emoji: getProductEmoji(product.product_id) }];
+      return [...prev, { product_id: product.product_id, name: product.name, price: parseFloat(product.price), quantity: 1, emoji: getProductEmoji(product) }];
     });
     showToast(`${product.name} added ✓`);
   }
@@ -87,7 +125,6 @@ export default function MenuPage() {
     ? products.filter((p) => p.category_id === activeCategory)
     : products;
 
-  /* ── Group by category for "All" view ─────────────────── */
   function groupByCategory(prods) {
     const map = {};
     for (const p of prods) {
@@ -114,15 +151,25 @@ export default function MenuPage() {
             <span>Table {tableId}</span>
           </div>
         </div>
-        <button
-          id="cart-open-btn"
-          className={`cart-btn${totalItems > 0 ? ' has-items' : ''}`}
-          onClick={() => setDrawerOpen(true)}
-          aria-label="Open cart"
-        >
-          🛒
-          {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
-        </button>
+        <div className="header-controls">
+          <button
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+          <button
+            id="cart-open-btn"
+            className={`cart-btn${totalItems > 0 ? ' has-items' : ''}`}
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open cart"
+          >
+            🛒
+            {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+          </button>
+        </div>
       </header>
 
       {/* ── Category tabs ── */}
@@ -165,7 +212,6 @@ export default function MenuPage() {
         )}
         {!loading && !error && (
           activeCategory === null ? (
-            /* Grouped view */
             Object.entries(groupByCategory(displayedProducts)).map(([catName, prods]) => (
               <div key={catName}>
                 <p className="section-title">{catName}</p>
@@ -174,7 +220,7 @@ export default function MenuPage() {
                     <ProductCard
                       key={p.product_id}
                       product={p}
-                      emoji={getProductEmoji(p.product_id)}
+                      emoji={getProductEmoji(p)}
                       qty={getQty(p.product_id)}
                       onAdd={() => addToCart(p)}
                       onChangeQty={(qty) => setQty(p.product_id, qty)}
@@ -184,13 +230,12 @@ export default function MenuPage() {
               </div>
             ))
           ) : (
-            /* Single category view */
             <div className="product-grid">
               {displayedProducts.map((p) => (
                 <ProductCard
                   key={p.product_id}
                   product={p}
-                  emoji={getProductEmoji(p.product_id)}
+                  emoji={getProductEmoji(p)}
                   qty={getQty(p.product_id)}
                   onAdd={() => addToCart(p)}
                   onChangeQty={(qty) => setQty(p.product_id, qty)}

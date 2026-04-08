@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +7,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <title>Restaurant Management System</title>
+
+    <!--
+      FOUC-PREVENTION SCRIPT
+      Runs synchronously before any CSS or React paints.
+      Reads localStorage and stamps data-theme on <html> immediately
+      so the correct CSS variable set is active from the very first frame.
+    -->
+    <script>
+      (function () {
+        var KEY = 'rms-theme';
+        var stored = localStorage.getItem(KEY);
+        var theme =
+          stored === 'light' || stored === 'dark'
+            ? stored
+            : window.matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light'
+            : 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
