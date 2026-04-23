@@ -3,12 +3,12 @@
 
 const express = require('express');
 const router = express.Router();
-const { register, login } = require('../controllers/authController');
+const authController = require('../controllers/authController');
 
-// POST /api/auth/register  → Block 2
-router.post('/register', register);
+// POST /api/auth/register
+router.post('/register', (req, res) => authController.register(req, res));
 
-// POST /api/auth/login     → Block 3
-router.post('/login', login);
+// POST /api/auth/login
+router.post('/login', (req, res) => authController.login(req, res));
 
 module.exports = router;

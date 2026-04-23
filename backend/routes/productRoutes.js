@@ -2,36 +2,27 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken, checkRole } = require('../middlewares/authMiddleware');
-const {
-  getAllProducts,
-  getProductById,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  updateStock,
-  getStockMovements,
-} = require('../controllers/productController');
+const productController = require('../controllers/productController');
 
 // GET /api/products        - All authenticated users
-router.get('/', verifyToken, getAllProducts);
+router.get('/', verifyToken, (req, res) => productController.getAll(req, res));
 
 // GET /api/products/:id    - All authenticated users
-router.get('/:id', verifyToken, getProductById);
+router.get('/:id', verifyToken, (req, res) => productController.getById(req, res));
 
 // GET /api/products/:id/stock-movements - All authenticated users
-router.get('/:id/stock-movements', verifyToken, getStockMovements);
+router.get('/:id/stock-movements', verifyToken, (req, res) => productController.getStockMovements(req, res));
 
 // POST /api/products       - Admin only
-router.post('/', verifyToken, checkRole(['Admin']), createProduct);
+router.post('/', verifyToken, checkRole(['Admin']), (req, res) => productController.create(req, res));
 
 // PUT /api/products/:id    - Admin only
-router.put('/:id', verifyToken, checkRole(['Admin']), updateProduct);
+router.put('/:id', verifyToken, checkRole(['Admin']), (req, res) => productController.update(req, res));
 
 // PATCH /api/products/:id/stock - Admin / Manager
-router.patch('/:id/stock', verifyToken, checkRole(['Admin', 'Manager']), updateStock);
+router.patch('/:id/stock', verifyToken, checkRole(['Admin', 'Manager']), (req, res) => productController.updateStock(req, res));
 
 // DELETE /api/products/:id - Admin only
-router.delete('/:id', verifyToken, checkRole(['Admin']), deleteProduct);
+router.delete('/:id', verifyToken, checkRole(['Admin']), (req, res) => productController.delete(req, res));
 
 module.exports = router;
-

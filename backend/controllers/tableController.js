@@ -1,74 +1,65 @@
 // controllers/tableController.js
-// Table management - Admin and Manager access
+// Table management — Admin and Manager access
+// Inheritance: extends BaseController
 
-const pool = require('../config/db');
+const BaseController = require('./BaseController');
 
-const VALID_STATUSES = ['Empty', 'Occupied'];
+class TableController extends BaseController {
+  /** @private */
+  static VALID_STATUSES = ['Empty', 'Occupied'];
 
-// GET /api/tables - List all tables
-const getAllTables = async (req, res) => {
-  try {
-    const [rows] = await pool.execute(
-      'SELECT table_id, table_number, status FROM dining_tables ORDER BY table_number ASC'
-    );
-    return res.status(200).json({ success: true, data: rows });
-  } catch (error) {
-    console.error('getAllTables error:', error.message);
-    return res.status(500).json({ success: false, message: 'Failed to retrieve tables.' });
-  }
-};
-
-// GET /api/tables/:id - Get a single table
-const getTableById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [rows] = await pool.execute(
-      'SELECT table_id, table_number, status FROM dining_tables WHERE table_id = ?',
-      [id]
-    );
-    if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Table not found.' });
+  // ── GET /api/tables ─────────────────────────────────────────────────────
+  async getAll(req, res) {
+    try {
+      const [rows] = await this.pool.execute(
+        'SELECT table_id, table_number, status FROM dining_tables ORDER BY table_number ASC'
+      );
+      return this.success(res, rows);
+    } catch (error) {
+      return this.handleError(res, error, 'getAllTables');
     }
-    return res.status(200).json({ success: true, data: rows[0] });
-  } catch (error) {
-    console.error('getTableById error:', error.message);
-    return res.status(500).json({ success: false, message: 'Failed to retrieve table.' });
-  }
-};
-
-// PATCH /api/tables/:id/status - Update table status (Admin / Manager)
-// Body: { "status": "Empty" } or { "status": "Occupied" }
-const updateTableStatus = async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-
-  if (!status) {
-    return res.status(400).json({ success: false, message: 'status field is required.' });
-  }
-  if (!VALID_STATUSES.includes(status)) {
-    return res.status(400).json({
-      success: false,
-      message: `Invalid status. Allowed values: ${VALID_STATUSES.join(', ')}`,
-    });
   }
 
-  try {
-    const [result] = await pool.execute(
-      'UPDATE dining_tables SET status = ? WHERE table_id = ?',
-      [status, id]
-    );
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Table not found.' });
+  // ── GET /api/tables/:id ─────────────────────────────────────────────────
+  async getById(req, res) {
+    const { id } = req.params;
+    try {
+      const [rows] = await this.pool.execute(
+        'SELECT table_id, table_number, status FROM dining_tables WHERE table_id = ?', [id]
+      );
+      if (rows.length === 0) {
+        return this.fail(res, 'Table not found.', 404);
+      }
+      return this.success(res, rows[0]);
+    } catch (error) {
+      return this.handleError(res, error, 'getTableById');
     }
-    return res.status(200).json({
-      success: true,
-      message: `Table status updated to "${status}".`,
-      data: { table_id: Number(id), status },
-    });
-  } catch (error) {
-    console.error('updateTableStatus error:', error.message);
-    return res.status(500).json({ success: false, message: 'Failed to update table status.' });
   }
-};
 
-module.exports = { getAllTables, getTableById, updateTableStatus };
+  // ── PATCH /api/tables/:id/status ────────────────────────────────────────
+  async updateStatus(req, res) {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return this.fail(res, 'status field is required.');
+    }
+    if (!TableController.VALID_STATUSES.includes(status)) {
+      return this.fail(res, `Invalid status. Allowed values: ${TableController.VALID_STATUSES.join(', ')}`);
+    }
+
+    try {
+      const [result] = await this.pool.execute(
+        'UPDATE dining_tables SET status = ? WHERE table_id = ?', [status, id]
+      );
+      if (result.affectedRows === 0) {
+        return this.fail(res, 'Table not found.', 404);
+      }
+      return this.success(res, { table_id: Number(id), status }, 200, `Table status updated to "${status}".`);
+    } catch (error) {
+      return this.handleError(res, error, 'updateTableStatus');
+    }
+  }
+}
+
+module.exports = new TableController();
