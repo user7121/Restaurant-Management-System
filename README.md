@@ -115,6 +115,55 @@ The **Restaurant Management System (RMS)** is a full-stack web application that 
          │  order_items, stock_movements   │
          └────────────────────────────────┘
 ```
+### Backend OOP Architecture (Controllers)
+
+The backend Express controllers have been refactored using Object-Oriented Programming (OOP) principles to ensure modularity and code reusability:
+
+- **Encapsulation:** The database pool is kept private (`#pool`), and controllers encapsulate their specific domain logic.
+- **Inheritance:** All domain controllers (`AuthController`, `ProductController`, etc.) extend the abstract-like `BaseController`, inheriting shared utilities like `success()` and `fail()` responses.
+- **Polymorphism:** The `handleError(res, error, context)` method is defined in the base class and overridden in the child classes to handle domain-specific errors (e.g., duplicate entries, foreign key violations) seamlessly.
+
+```mermaid
+classDiagram
+    class BaseController {
+        -#pool: Pool
+        +success(res, data, statusCode, message)
+        +fail(res, message, statusCode)
+        +handleError(res, error, context)
+    }
+
+    class AuthController {
+        +register(req, res)
+        +login(req, res)
+        +handleError(res, error, context)
+    }
+
+    class CategoryController {
+        +getAll(req, res)
+        +create(req, res)
+        +update(req, res)
+        +delete(req, res)
+        +handleError(res, error, context)
+    }
+
+    class ProductController {
+        +getAll(req, res)
+        +updateStock(req, res)
+        +handleError(res, error, context)
+    }
+
+    class OrderController {
+        +create(req, res)
+        +handleError(res, error, context)
+    }
+
+    BaseController <|-- AuthController
+    BaseController <|-- CategoryController
+    BaseController <|-- ProductController
+    BaseController <|-- OrderController
+    BaseController <|-- TableController
+    BaseController <|-- ReportController
+```
 
 ### Role-Based Access Control
 
