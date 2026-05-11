@@ -44,7 +44,8 @@ The **Restaurant Management System (RMS)** is a full-stack web application that 
 | 📊 Admin Dashboard | ✅ Complete |
 | 🎨 Premium Dark Theme UI | ✅ Complete |
 | 📱 QR Code Customer Ordering | ✅ Complete |
-| 📈 Sales Reporting | 🔄 In Progress |
+| 📈 Sales Reporting | ✅ Complete |
+| 💰 Revenue & Profit Metrics | ✅ Complete |
 
 ---
 
@@ -384,7 +385,7 @@ Project managed with **Jira Scrum** methodology.
 | Sprint 1 | Project setup, DB schema, Auth API | ✅ Done |
 | Sprint 2 | Product & Category CRUD, Frontend Login | ✅ Done |
 | Sprint 3 | Order Processing, Stock Management, Admin Dashboard | ✅ Done |
-| Sprint 4 | Sales Reporting, QR Menu, Polish & Tests | 🔄 Active |
+| Sprint 4 | Sales Reporting, Revenue & Profit, QR Menu, Polish & Tests | ✅ Done |
 
 ---
 
@@ -392,8 +393,10 @@ Project managed with **Jira Scrum** methodology.
 
 ```
 docs/
-├── UML_UseCase_RestaurantManagementSystem.png   # Use Case Diagram
+├── UML_UseCase_Diagram.md                       # UML Use Case Diagram (Mermaid)
+├── UML_UseCase_RestaurantManagementSystem.png   # Use Case Diagram (image)
 ├── Smart_Restaurant_Project_Planning.xlsx       # 14-week timeline + budget
+├── RESTAURANT MANAGEMENT SYSTEM.docx            # Project documentation
 └── risk_analysis.docx                           # Risk register
 ```
 
@@ -499,12 +502,15 @@ Open two tabs:
 
 ---
 
-### Step 5 — Admin Dashboard (2 min)
-> Overview of system state.
+### Step 5 — Admin Dashboard & Revenue (3 min)
+> Overview of system state and financial metrics.
 
 1. Navigate to **Dashboard**
 2. Show the stock status panel — highlight any low-stock items
-3. Show active orders summary
+3. Show the **Profit Overview** panel (revenue, gross/net profit, margin)
+4. Click **Full analytics →** to open the **Revenue & Profit** page
+5. Show KPI cards, revenue trend chart, and category breakdown
+6. Adjust the **Cost Ratio Estimator** slider and show profits recalculating live
 
 ---
 

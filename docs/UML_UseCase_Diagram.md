@@ -25,6 +25,7 @@ flowchart LR
         UC7(["Manage Products & Stock"])
         UC8(["View Sales Reports"])
         UC9(["System Config & Auth"])
+        UC10(["View Revenue & Profit"])
     end
 
     %% Relationships
@@ -42,4 +43,5 @@ flowchart LR
     Admin --> UC7
     Admin --> UC8
     Admin --> UC9
+    Admin --> UC10
 ```

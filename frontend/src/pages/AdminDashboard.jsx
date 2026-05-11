@@ -90,7 +90,7 @@ export default function AdminDashboard() {
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       ),
-      link: '/admin/orders',
+      link: '/admin/revenue',
     },
   ];
 
@@ -225,6 +225,35 @@ export default function AdminDashboard() {
               })
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Profit Metrics Mini Panel */}
+      <div className="animate-fade-in-up" style={{ animationDelay: '400ms', marginTop: 'var(--space-6)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+          <h3 style={s.sectionTitle}>Profit Overview</h3>
+          <Link to="/admin/revenue" style={s.viewAllLink}>Full analytics →</Link>
+        </div>
+        <div style={{ ...s.ordersCard, flexDirection: 'row', flexWrap: 'wrap', gap: 'var(--space-4)', justifyContent: 'space-around', padding: 'var(--space-5) var(--space-6)' }}>
+          {(() => {
+            const costRatio = 0.4;
+            const grossProfit = stats.revenue * (1 - costRatio);
+            const netProfit = grossProfit * 0.85;
+            const marginPct = stats.revenue > 0 ? (netProfit / stats.revenue) * 100 : 0;
+            const avgOrder = stats.orders > 0 ? stats.revenue / stats.orders : 0;
+            return [
+              { label: 'Total Revenue', value: `₺${stats.revenue.toFixed(0)}`, color: 'var(--primary-500)' },
+              { label: 'Est. Gross Profit', value: `₺${grossProfit.toFixed(0)}`, color: 'var(--success-500)' },
+              { label: 'Est. Net Profit', value: `₺${netProfit.toFixed(0)}`, color: 'var(--purple-500)' },
+              { label: 'Margin', value: `${marginPct.toFixed(1)}%`, color: marginPct > 30 ? 'var(--success-500)' : 'var(--danger-500)' },
+              { label: 'Avg Order', value: `₺${avgOrder.toFixed(0)}`, color: 'var(--warning-500)' },
+            ].map((m, i) => (
+              <div key={m.label} style={{ textAlign: 'center', minWidth: 100 }}>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--surface-500)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{m.label}</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: m.color, marginTop: 4 }}>{loading ? '—' : m.value}</div>
+              </div>
+            ));
+          })()}
         </div>
       </div>
     </div>

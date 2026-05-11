@@ -9,6 +9,7 @@ import TableDashboard from "./components/tables/TableDashboard";
 import POSDashboard from "./components/orders/POSDashboard";
 import OrderTracking from "./pages/OrderTracking";
 import SalesDashboard from "./pages/SalesDashboard";
+import RevenueProfit from "./pages/RevenueProfit";
 
 function App() {
   const RequireAuth = ({ children }) => {
@@ -36,6 +37,7 @@ function App() {
           <Route path="pos/:tableId" element={<POSDashboard />} />
           <Route path="orders" element={<OrderTracking />} />
           <Route path="sales" element={<SalesDashboard />} />
+          <Route path="revenue" element={<RevenueProfit />} />
         </Route>
         <Route path="/" element={<Navigate to="/admin" replace />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
