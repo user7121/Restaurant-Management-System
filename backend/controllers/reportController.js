@@ -4,6 +4,7 @@
 // Polymorphism: overrides handleError for VALIDATION errors
 
 const BaseController = require('./BaseController');
+const RevenueCalculator = require('../utils/revenueCalculator');
 
 class ReportController extends BaseController {
   // ── Polymorphic error handler ───────────────────────────────────────────
@@ -131,6 +132,212 @@ class ReportController extends BaseController {
       })));
     } catch (error) {
       return this.handleError(res, error, 'getBestSellers');
+    }
+  }
+
+  // ── GET /api/reports/revenue-by-category ────────────────────────────────
+  async getRevenueByCategory(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      const { startStr, endStr } = this._defaultDateRange(start_date, end_date);
+
+      const sql = `
+        SELECT
+          c.category_id,
+          c.category_name,
+          SUM(oi.quantity)                 AS quantity_sold,
+          SUM(oi.quantity * oi.unit_price) AS total_revenue,
+          COUNT(DISTINCT oi.product_id)    AS unique_products,
+          COUNT(DISTINCT oi.order_id)      AS order_count
+        FROM order_items oi
+        INNER JOIN orders o    ON oi.order_id   = o.order_id
+        INNER JOIN products p  ON oi.product_id = p.product_id
+        INNER JOIN categories c ON p.category_id = c.category_id
+        WHERE o.status = 'Delivered' AND DATE(o.created_at) BETWEEN ? AND ?
+        GROUP BY c.category_id, c.category_name
+        ORDER BY total_revenue DESC
+      `;
+
+      const [rows] = await this.pool.execute(sql, [startStr, endStr]);
+
+      return this.success(res, rows.map((r) => ({
+        category_id:     r.category_id,
+        category_name:   r.category_name,
+        quantity_sold:   parseInt(r.quantity_sold, 10),
+        total_revenue:   parseFloat(parseFloat(r.total_revenue).toFixed(2)),
+        unique_products: parseInt(r.unique_products, 10),
+        order_count:     parseInt(r.order_count, 10),
+      })));
+    } catch (error) {
+      return this.handleError(res, error, 'getRevenueByCategory');
+    }
+  }
+
+  // ── GET /api/reports/revenue-by-payment-method ──────────────────────────
+  async getRevenueByPaymentMethod(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      const { startStr, endStr } = this._defaultDateRange(start_date, end_date);
+
+      const sql = `
+        SELECT
+          COALESCE(o.payment_method, 'Unknown') AS payment_method,
+          COUNT(o.order_id)                      AS transaction_count,
+          SUM(o.total_amount)                    AS total_revenue,
+          AVG(o.total_amount)                    AS average_transaction_value
+        FROM orders o
+        WHERE o.status = 'Delivered' AND DATE(o.created_at) BETWEEN ? AND ?
+        GROUP BY o.payment_method
+        ORDER BY total_revenue DESC
+      `;
+
+      const [rows] = await this.pool.execute(sql, [startStr, endStr]);
+
+      return this.success(res, rows.map((r) => ({
+        payment_method:           r.payment_method,
+        transaction_count:        parseInt(r.transaction_count, 10),
+        total_revenue:            parseFloat(parseFloat(r.total_revenue).toFixed(2)),
+        average_transaction_value: parseFloat(parseFloat(r.average_transaction_value).toFixed(2)),
+      })));
+    } catch (error) {
+      return this.handleError(res, error, 'getRevenueByPaymentMethod');
+    }
+  }
+
+  // ── GET /api/reports/revenue-by-hour ────────────────────────────────────
+  async getRevenueByHour(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      const { startStr, endStr } = this._defaultDateRange(start_date, end_date);
+
+      const sql = `
+        SELECT
+          DATE_FORMAT(o.created_at, '%H:00') AS hour,
+          COUNT(o.order_id)                   AS order_count,
+          SUM(o.total_amount)                 AS total_revenue,
+          AVG(o.total_amount)                 AS average_order_value
+        FROM orders o
+        WHERE o.status = 'Delivered' AND DATE(o.created_at) BETWEEN ? AND ?
+        GROUP BY DATE_FORMAT(o.created_at, '%H:00')
+        ORDER BY hour ASC
+      `;
+
+      const [rows] = await this.pool.execute(sql, [startStr, endStr]);
+
+      return this.success(res, rows.map((r) => ({
+        hour:                 r.hour,
+        order_count:          parseInt(r.order_count, 10),
+        total_revenue:        parseFloat(parseFloat(r.total_revenue).toFixed(2)),
+        average_order_value:  parseFloat(parseFloat(r.average_order_value).toFixed(2)),
+      })));
+    } catch (error) {
+      return this.handleError(res, error, 'getRevenueByHour');
+    }
+  }
+
+  // ── GET /api/reports/daily-revenue ──────────────────────────────────────
+  async getDailyRevenue(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      const { startStr, endStr } = this._defaultDateRange(start_date, end_date);
+
+      const sql = `
+        SELECT
+          DATE(o.created_at)         AS date,
+          COUNT(o.order_id)          AS order_count,
+          SUM(o.total_amount)        AS total_revenue,
+          AVG(o.total_amount)        AS average_order_value,
+          MIN(o.total_amount)        AS min_order_value,
+          MAX(o.total_amount)        AS max_order_value
+        FROM orders o
+        WHERE o.status = 'Delivered' AND DATE(o.created_at) BETWEEN ? AND ?
+        GROUP BY DATE(o.created_at)
+        ORDER BY date ASC
+      `;
+
+      const [rows] = await this.pool.execute(sql, [startStr, endStr]);
+
+      return this.success(res, rows.map((r) => ({
+        date:                  r.date,
+        order_count:           parseInt(r.order_count, 10),
+        total_revenue:         parseFloat(parseFloat(r.total_revenue).toFixed(2)),
+        average_order_value:   parseFloat(parseFloat(r.average_order_value).toFixed(2)),
+        min_order_value:       parseFloat(parseFloat(r.min_order_value).toFixed(2)),
+        max_order_value:       parseFloat(parseFloat(r.max_order_value).toFixed(2)),
+      })));
+    } catch (error) {
+      return this.handleError(res, error, 'getDailyRevenue');
+    }
+  }
+
+  // ── GET /api/reports/comprehensive ──────────────────────────────────────
+  async getComprehensiveReport(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      const { startStr, endStr } = this._defaultDateRange(start_date, end_date);
+
+      // Fetch all necessary data
+      const [orders] = await this.pool.execute(
+        `SELECT order_id, total_amount, payment_method, created_at 
+         FROM orders 
+         WHERE status = 'Delivered' AND DATE(created_at) BETWEEN ? AND ?
+         ORDER BY created_at ASC`,
+        [startStr, endStr]
+      );
+
+      const [orderItems] = await this.pool.execute(
+        `SELECT 
+          oi.order_id, oi.product_id, oi.quantity, oi.unit_price,
+          p.name AS product_name, c.category_name AS category
+         FROM order_items oi
+         INNER JOIN orders o ON oi.order_id = o.order_id
+         INNER JOIN products p ON oi.product_id = p.product_id
+         INNER JOIN categories c ON p.category_id = c.category_id
+         WHERE o.status = 'Delivered' AND DATE(o.created_at) BETWEEN ? AND ?`,
+        [startStr, endStr]
+      );
+
+      // Generate comprehensive report using RevenueCalculator
+      const report = RevenueCalculator.generateComprehensiveReport(orders, orderItems);
+
+      return this.success(res, report);
+    } catch (error) {
+      return this.handleError(res, error, 'getComprehensiveReport');
+    }
+  }
+
+  // ── GET /api/reports/summary ────────────────────────────────────────────
+  async getRevenueSummary(req, res) {
+    try {
+      const { start_date, end_date } = req.query;
+      const { startStr, endStr } = this._defaultDateRange(start_date, end_date);
+
+      const sql = `
+        SELECT
+          COUNT(o.order_id)           AS total_orders,
+          SUM(o.total_amount)         AS total_revenue,
+          AVG(o.total_amount)         AS average_order_value,
+          MIN(o.total_amount)         AS minimum_order_value,
+          MAX(o.total_amount)         AS maximum_order_value,
+          COUNT(DISTINCT DATE(o.created_at)) AS days_with_orders
+        FROM orders o
+        WHERE o.status = 'Delivered' AND DATE(o.created_at) BETWEEN ? AND ?
+      `;
+
+      const [rows] = await this.pool.execute(sql, [startStr, endStr]);
+      const summary = rows[0];
+
+      return this.success(res, {
+        total_orders:         parseInt(summary.total_orders, 10),
+        total_revenue:        parseFloat(parseFloat(summary.total_revenue).toFixed(2)),
+        average_order_value:  parseFloat(parseFloat(summary.average_order_value).toFixed(2)),
+        minimum_order_value:  parseFloat(parseFloat(summary.minimum_order_value).toFixed(2)),
+        maximum_order_value:  parseFloat(parseFloat(summary.maximum_order_value).toFixed(2)),
+        days_with_orders:     parseInt(summary.days_with_orders, 10),
+        date_range:           { start_date: startStr, end_date: endStr },
+      });
+    } catch (error) {
+      return this.handleError(res, error, 'getRevenueSummary');
     }
   }
 }
