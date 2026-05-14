@@ -262,7 +262,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
-## 6. Database Schema
+## 7. Database Schema
 
 Four SQL files initialise the database in order:
 
@@ -349,7 +349,7 @@ npm run dev                # http://localhost:5174
 
 ---
 
-## 9. CI/CD Pipeline
+## 10. CI/CD Pipeline
 
 The GitHub Actions workflow (`.github/workflows/ci-cd.yml`) runs **5 jobs** on every push to `main`:
 
@@ -373,7 +373,7 @@ View pipeline runs: [GitHub Actions →](https://github.com/user7121/Restaurant-
 
 ---
 
-## 10. Sprint Board
+## 11. Sprint Board
 
 Project managed with **Jira Scrum** methodology.
 
@@ -389,7 +389,7 @@ Project managed with **Jira Scrum** methodology.
 
 ---
 
-## 11. Project Documentation
+## 12. Project Documentation
 
 ```
 docs/
@@ -402,7 +402,7 @@ docs/
 
 ---
 
-## 12. Security Notes
+## 13. Security Notes
 
 > ⚠️ **Before any production deployment:**
 
@@ -413,7 +413,7 @@ docs/
 
 ---
 
-## 13. Risk Register
+## 14. Risk Register
 
 See [`docs/risk_register.docx`](docs/risk_register.docx) for the full risk register.
 
@@ -430,7 +430,7 @@ See [`docs/risk_register.docx`](docs/risk_register.docx) for the full risk regis
 
 ---
 
-## 14. Demo Plan
+## 15. Demo Plan
 
 > 🎯 Estimated duration: **~15 minutes**
 
